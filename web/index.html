@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Paper Trader Demo</title>
+  <link rel="stylesheet" href="trader.css" />
+  <style>
+    html, body { margin: 0; padding: 0; min-height: 100%; background: #FDFBF7; }
+    #app-host { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="app-host"></div>
+
+  <script src="data.js"></script>
+  <script src="trader.js"></script>
+  <script>
+    PaperTrader.mount('#app-host', {
+      onComplete: (summary) => {
+        console.log('Run finished:', summary);
+        // Your host app: dispatch coins/XP, save to backend, etc.
+      },
+    });
+  </script>
+</body>
+</html>
