@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Money Moves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<style>
+  /* ----- TOKENS ----- */
+  :root{
+    --cream: #F4EFE3;
+    --cream-2: #ECE5D3;
+    --paper: #FBF7EC;
+    --forest: #1E3A2E;
+    --forest-2: #2A4A3A;
+    --gold: #B89855;
+    --gold-light: #D4B97A;
+    --coral: #D4654A;
+    --rose: #C77985;
+    --ink: #1A1814;
+    --ink-soft: #4A453E;
+    --danger: #B23B2B;
+    --shadow-card: 0 30px 60px -20px rgba(26,24,20,.35), 0 12px 24px -8px rgba(26,24,20,.18);
+    --shadow-soft: 0 8px 24px -8px rgba(26,24,20,.18);
+    --serif: 'Fraunces', 'Georgia', serif;
+    --sans: 'Geist', system-ui, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{
+    font-family:var(--sans);
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+    user-select:none;
+    position:relative;
+  }
+  /* Paper texture */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(184,152,85,.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(30,58,46,.04) 0%, transparent 50%);
+    pointer-events:none;
+    z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events:none;
+    z-index:1;
+    mix-blend-mode:multiply;
+    opacity:.6;
+  }
+  #app{
+    position:relative;
+    z-index:2;
+    height:100dvh;
+    width:100vw;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* ----- SCREEN: SPLASH ----- */
+  .splash{
+    width:100%;max-width:520px;padding:32px;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+    animation:fadeUp .8s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .splash .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:18px;
+  }
+  .splash h1{
+    font-family:var(--serif);
+    font-weight:300;
+    font-size:clamp(64px, 16vw, 120px);
+    line-height:.9;
+    letter-spacing:-.04em;
+    color:var(--forest);
+    margin-bottom:20px;
+  }
+  .splash h1 em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--coral);
+  }
+  .splash .tagline{
+    font-family:var(--serif);
+    font-size:clamp(17px, 4.5vw, 22px);
+    font-weight:400;
+    color:var(--ink-soft);
+    max-width:380px;
+    margin-bottom:36px;
+    font-style:italic;
+    line-height:1.35;
+  }
+  .splash .rule{
+    width:60px;height:1px;background:var(--gold);margin:0 auto 36px;
+  }
+  .splash .meta{
+    display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-bottom:40px;
+  }
+  .splash .meta div{
+    font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .splash .meta b{color:var(--forest);font-weight:600;font-family:var(--mono);}
+
+  .btn{
+    font-family:var(--sans);
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.02em;
+    padding:18px 36px;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    background:var(--forest);
+    color:var(--cream);
+    transition:transform .2s, background .2s, box-shadow .2s;
+    box-shadow:var(--shadow-soft);
+    display:inline-flex;align-items:center;gap:10px;
+  }
+  .btn:hover{background:var(--forest-2);transform:translateY(-2px);box-shadow:0 12px 24px -8px rgba(26,24,20,.28)}
+  .btn:active{transform:translateY(0)}
+  .btn .arrow{font-size:18px;line-height:1}
+  .btn-ghost{
+    background:transparent;color:var(--forest);border:1px solid var(--forest);box-shadow:none;
+  }
+  .btn-ghost:hover{background:var(--forest);color:var(--cream);}
+
+  /* ----- SCREEN: ONBOARDING ----- */
+  .onboard{
+    width:100%;max-width:440px;padding:32px;text-align:center;
+    animation:fadeUp .6s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .onboard .step{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--gold);
+    text-transform:uppercase;margin-bottom:20px;
+  }
+  .onboard h2{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(36px, 9vw, 56px);line-height:1;letter-spacing:-.02em;
+    color:var(--forest);margin-bottom:14px;
+  }
+  .onboard h2 em{font-style:italic;color:var(--coral);font-weight:400}
+  .onboard p{color:var(--ink-soft);font-size:15px;margin-bottom:32px;max-width:340px;margin-inline:auto}
+  .field{
+    width:100%;border:none;border-bottom:1.5px solid var(--forest);
+    background:transparent;font-family:var(--serif);font-size:32px;
+    text-align:center;color:var(--forest);padding:12px 0 14px;outline:none;
+    font-weight:300;
+  }
+  .field::placeholder{color:rgba(30,58,46,.3);font-style:italic}
+  .field:focus{border-color:var(--coral)}
+  .onboard .actions{margin-top:36px;display:flex;gap:12px;justify-content:center}
+
+  /* ----- SCREEN: GAME ----- */
+  .game{
+    width:100%;height:100%;max-width:520px;
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top,12px) 16px 16px;
+    position:relative;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 4px 18px;
+  }
+  .year-chip{
+    font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ink-soft);
+    display:flex;align-items:center;gap:8px;
+  }
+  .year-chip b{color:var(--forest);font-weight:600}
+  .year-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block}
+  .progress{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ink-soft);
+  }
+
+  /* Stats HUD */
+  .hud{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;
+  }
+  .stat{
+    background:var(--paper);
+    border:1px solid rgba(30,58,46,.1);
+    border-radius:14px;
+    padding:10px 8px 8px;
+    text-align:center;
+    position:relative;
+    transition:transform .3s, box-shadow .3s;
+  }
+  .stat.flash-up{animation:flashUp .6s}
+  .stat.flash-down{animation:flashDown .6s}
+  .stat.warn{border-color:var(--coral);background:#FAEDE7}
+  .stat.danger{border-color:var(--danger);background:#FAE2DD;animation:pulseDanger 1.2s infinite}
+  .stat .icon{font-size:18px;line-height:1;margin-bottom:4px}
+  .stat .label{
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;
+  }
+  .stat .value{
+    font-family:var(--serif);font-size:22px;font-weight:400;color:var(--forest);
+    line-height:1;font-variant-numeric:tabular-nums;
+  }
+  .stat .bar{
+    height:3px;border-radius:2px;background:rgba(30,58,46,.08);
+    margin-top:6px;overflow:hidden;
+  }
+  .stat .bar-fill{
+    height:100%;background:var(--forest);
+    transition:width .5s cubic-bezier(.2,.7,.2,1),background .3s;
+    border-radius:2px;
+  }
+  .stat.warn .bar-fill{background:var(--coral)}
+  .stat.danger .bar-fill{background:var(--danger)}
+  .delta-pop{
+    position:absolute;top:-6px;right:-2px;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    padding:2px 6px;border-radius:8px;
+    background:var(--forest);color:var(--cream);
+    animation:deltaPop 1.2s forwards;
+    pointer-events:none;
+  }
+  .delta-pop.down{background:var(--danger)}
+
+  /* Card stack */
+  .card-area{
+    flex:1;
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    margin:8px 0 4px;
+    min-height:380px;
+  }
+  .card{
+    position:absolute;
+    width:100%;max-width:340px;
+    aspect-ratio: 3 / 4.4;
+    background:var(--paper);
+    border-radius:24px;
+    box-shadow:var(--shadow-card);
+    padding:28px 26px 26px;
+    display:flex;flex-direction:column;
+    cursor:grab;
+    will-change:transform;
+    transform-origin:center 110%;
+    overflow:hidden;
+    border:1px solid rgba(184,152,85,.25);
+  }
+  .card.dragging{cursor:grabbing;transition:none}
+  .card.behind{
+    transform:scale(.94) translateY(14px);
+    opacity:.55;
+    pointer-events:none;
+    filter:saturate(.6);
+  }
+  .card.behind-2{
+    transform:scale(.88) translateY(26px);
+    opacity:.25;
+    pointer-events:none;
+  }
+  .card-corner{
+    position:absolute;top:18px;right:22px;
+    font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+    color:var(--gold);text-transform:uppercase;
+  }
+  .card-num{
+    font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+    color:var(--ink-soft);text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .card-scene{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--coral);
+    margin-bottom:14px;
+  }
+  .card-body{
+    font-family:var(--serif);
+    font-size:clamp(20px, 5.2vw, 24px);
+    font-weight:400;
+    line-height:1.3;
+    color:var(--ink);
+    flex:1;
+    letter-spacing:-.01em;
+  }
+  .card-body em{font-style:italic;color:var(--coral)}
+  .card-footer{
+    margin-top:auto;padding-top:20px;
+    border-top:1px dashed rgba(30,58,46,.2);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .choice-hint{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);
+    display:flex;align-items:center;gap:6px;
+  }
+  .choice-hint.left{color:var(--danger)}
+  .choice-hint.right{color:var(--forest)}
+
+  /* Drag indicators overlaid on card */
+  .stamp{
+    position:absolute;top:30px;
+    font-family:var(--serif);font-weight:300;
+    font-size:48px;font-style:italic;
+    padding:4px 18px;border:2px solid;
+    border-radius:8px;
+    opacity:0;
+    transition:opacity .15s;
+    pointer-events:none;
+    transform:rotate(-8deg);
+    letter-spacing:.02em;
+  }
+  .stamp.yes{right:24px;color:var(--forest);border-color:var(--forest);transform:rotate(8deg)}
+  .stamp.no{left:24px;color:var(--danger);border-color:var(--danger)}
+
+  /* Swipe hints around card */
+  .swipe-hints{
+    position:absolute;bottom:8px;left:0;right:0;
+    display:flex;justify-content:space-between;
+    padding:0 20px;
+    font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+    color:var(--ink-soft);text-transform:uppercase;
+    opacity:.7;
+    pointer-events:none;
+  }
+
+  /* Choice buttons (tap-friendly fallback) */
+  .choices{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;
+  }
+  .choice-btn{
+    background:var(--paper);
+    border:1px solid rgba(30,58,46,.15);
+    border-radius:14px;
+    padding:14px 16px;
+    cursor:pointer;
+    font-family:var(--sans);
+    font-size:13px;font-weight:500;
+    color:var(--ink);
+    text-align:center;
+    transition:all .2s;
+    box-shadow:var(--shadow-soft);
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    min-height:64px;justify-content:center;
+  }
+  .choice-btn:hover{transform:translateY(-2px);border-color:var(--forest)}
+  .choice-btn .ch-label{
+    font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  .choice-btn .ch-text{
+    font-family:var(--serif);font-style:italic;font-size:18px;font-weight:400;
+  }
+  .choice-btn.no .ch-text{color:var(--danger)}
+  .choice-btn.yes .ch-text{color:var(--forest)}
+
+  /* Fairy Godmother popup */
+  .fairy{
+    position:fixed;inset:0;
+    background:rgba(26,24,20,.4);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    z-index:50;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    animation:fadeIn .3s both;
+  }
+  .fairy-card{
+    background:var(--paper);
+    border-radius:24px;
+    max-width:380px;width:100%;
+    padding:32px 28px 24px;
+    box-shadow:var(--shadow-card);
+    position:relative;
+    animation:fairyIn .5s cubic-bezier(.2,.7,.2,1) both;
+    border:1px solid rgba(184,152,85,.4);
+  }
+  .fairy-card::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid rgba(184,152,85,.3);
+    border-radius:18px;
+    pointer-events:none;
+  }
+  .fairy-eyebrow{
+    font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold);
+    text-align:center;margin-bottom:8px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .fairy-eyebrow .ornament{
+    width:24px;height:1px;background:var(--gold);
+  }
+  .fairy-title{
+    font-family:var(--serif);font-weight:300;font-style:italic;
+    font-size:22px;text-align:center;color:var(--forest);
+    margin-bottom:16px;letter-spacing:-.01em;
+  }
+  .fairy-body{
+    font-family:var(--serif);font-size:17px;line-height:1.45;
+    color:var(--ink);text-align:center;font-weight:400;
+    margin-bottom:24px;
+  }
+  .fairy-body em{font-style:italic;color:var(--coral)}
+  .fairy-btn{
+    width:100%;
+    background:var(--forest);color:var(--cream);
+    border:none;border-radius:14px;
+    padding:14px;
+    font-family:var(--sans);font-size:13px;font-weight:600;
+    letter-spacing:.02em;cursor:pointer;
+    transition:background .2s;
+  }
+  .fairy-btn:hover{background:var(--forest-2)}
+
+  /* Year transition */
+  .year-splash{
+    position:fixed;inset:0;
+    background:var(--forest);
+    color:var(--cream);
+    z-index:60;
+    display:flex;align-items:center;justify-content:center;
+    flex-direction:column;
+    animation:yearIn .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .year-splash .num{
+    font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--gold);margin-bottom:12px;
+  }
+  .year-splash .title{
+    font-family:var(--serif);font-weight:300;font-style:italic;
+    font-size:clamp(48px, 14vw, 96px);letter-spacing:-.03em;
+    line-height:1;color:var(--cream);
+  }
+  .year-splash .sub{
+    margin-top:18px;
+    font-family:var(--serif);font-size:18px;font-style:italic;
+    color:var(--gold-light);opacity:0;animation:fadeUp .6s .4s forwards;
+  }
+
+  /* End screens */
+  .end{
+    width:100%;max-width:480px;padding:24px;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+    animation:fadeUp .8s cubic-bezier(.2,.7,.2,1) both;
+    overflow-y:auto;max-height:100dvh;
+  }
+  .end .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;margin-bottom:14px;
+  }
+  .end.death .eyebrow{color:var(--danger)}
+  .end.win .eyebrow{color:var(--gold)}
+  .end h2{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(40px, 11vw, 64px);line-height:.95;
+    letter-spacing:-.03em;color:var(--forest);margin-bottom:14px;
+  }
+  .end h2 em{font-style:italic;color:var(--coral);font-weight:400}
+  .end .sub{
+    font-family:var(--serif);font-size:18px;color:var(--ink-soft);
+    max-width:380px;margin-bottom:28px;font-style:italic;line-height:1.4;
+  }
+  .end-stats{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+    width:100%;max-width:340px;margin-bottom:24px;
+  }
+  .end-stat{
+    background:var(--paper);
+    border:1px solid rgba(30,58,46,.1);
+    border-radius:14px;padding:14px;text-align:left;
+  }
+  .end-stat .l{
+    font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;
+  }
+  .end-stat .v{
+    font-family:var(--serif);font-size:26px;color:var(--forest);font-weight:400;
+  }
+  .end-summary{
+    background:var(--paper);
+    border:1px solid rgba(184,152,85,.3);
+    border-radius:16px;
+    padding:20px 18px;margin-bottom:24px;
+    max-width:380px;width:100%;
+    position:relative;
+  }
+  .end-summary .label{
+    font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+    color:var(--gold);text-transform:uppercase;margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;justify-content:center;
+  }
+  .end-summary .label::before,
+  .end-summary .label::after{content:"";width:18px;height:1px;background:var(--gold)}
+  .end-summary p{
+    font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--ink);
+    text-align:center;
+  }
+  .end-summary p em{font-style:italic;color:var(--coral)}
+  .end .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+  /* Animations */
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes flashUp{
+    0%,100%{background:var(--paper)}
+    30%{background:#E8F0E2;transform:scale(1.05)}
+  }
+  @keyframes flashDown{
+    0%,100%{background:var(--paper)}
+    30%{background:#F5DAD3;transform:scale(.97)}
+  }
+  @keyframes pulseDanger{
+    0%,100%{box-shadow:0 0 0 0 rgba(178,59,43,.4)}
+    50%{box-shadow:0 0 0 6px rgba(178,59,43,0)}
+  }
+  @keyframes deltaPop{
+    0%{opacity:0;transform:translateY(0) scale(.8)}
+    20%{opacity:1;transform:translateY(-8px) scale(1.1)}
+    80%{opacity:1;transform:translateY(-18px) scale(1)}
+    100%{opacity:0;transform:translateY(-26px) scale(.95)}
+  }
+  @keyframes fairyIn{
+    from{opacity:0;transform:translateY(40px) scale(.95)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+  @keyframes yearIn{
+    0%{opacity:0;transform:scale(1.05)}
+    15%{opacity:1;transform:scale(1)}
+    85%{opacity:1;transform:scale(1)}
+    100%{opacity:0;transform:scale(.97)}
+  }
+  @keyframes confetti{
+    to{transform:translateY(120vh) rotate(720deg);opacity:0}
+  }
+
+  .confetti-piece{
+    position:fixed;width:8px;height:14px;
+    top:-20px;
+    animation:confetti 4s linear forwards;
+    z-index:55;
+    pointer-events:none;
+  }
+
+  /* Reset button (dev) */
+  .reset-link{
+    font-family:var(--mono);font-size:10px;color:var(--ink-soft);
+    text-decoration:underline;cursor:pointer;margin-top:18px;
+    letter-spacing:.1em;text-transform:uppercase;background:none;border:none;
+  }
+  .reset-link:hover{color:var(--coral)}
+
+  /* Footer brand */
+  .brand-footer{
+    position:absolute;bottom:8px;left:0;right:0;
+    text-align:center;
+    font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+    color:var(--ink-soft);text-transform:uppercase;opacity:.5;
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   MONEY MOVES — Reigns-style life sim for Fidelity Smart Money
+   ============================================================
+   - 4 stats: Wallet 💰 Career 🎯 Vibe ✨ Future 🔮
+   - Each starts at 50, range 0-100
+   - Game over if any hits 0
+   - Win when all freshman→senior cards complete
+   - 44 scenarios: 11 per year × 4 years (Fr/So/Jr/Sr)
+*/
+
+// ---------- SCENARIO DECK ----------
+const DECK = [
+  // ============ FRESHMAN ============
+  { year:1, scene:"First Paycheck", body:"Your work-study deposits <em>$420</em>. Set up auto-split: 50% checking, 50% savings?", yes:{label:"Split it", d:{wallet:+10, future:+15, vibe:-5}}, no:{label:"All checking", d:{wallet:+18, future:-5, vibe:+5}}, fairyYes:"Pay yourself first. Money you don't see is money you don't spend.", fairyNo:"Easy access = easy spend. People save <em>3× more</em> when it's automatic." },
+  { year:1, scene:"Spring Break", body:"Roommates booked Cabo. <em>$850</em> Venmo due tonight. They'll never let you live it down.", yes:{label:"Send it", d:{wallet:-22, vibe:+18, future:-10}}, no:{label:"Sit it out", d:{wallet:+2, vibe:-15, future:+6}}, fairyYes:"Memories matter — but $850 invested at 19 grows to <em>~$13K</em> by retirement.", fairyNo:"Saying no to FOMO is a real money move. Your future self just got richer." },
+  { year:1, scene:"Free Swag Trap", body:"Guy at the student union: free t-shirt if you sign up for a credit card. The shirt is cute.", yes:{label:"Sign up", d:{wallet:-3, future:-15, vibe:+5}}, no:{label:"Walk away", d:{future:+10, career:+3}}, fairyYes:"Kiosk cards charge <em>25%+ APR</em>. Get a card — but from your bank, not a folding table.", fairyNo:"Your first credit card should come from research, not a free shirt." },
+  { year:1, scene:"The Roth Conversation", body:"Parents say they'll match anything you put in a Roth IRA this year. They suggest <em>$50/mo</em>.", yes:{label:"Open it", d:{wallet:-8, future:+25, career:+5}}, no:{label:"Not yet", d:{wallet:+6, future:-12}}, fairyYes:"Roth at 19 = the most powerful financial move of your life. <em>Compound interest is your superpower.</em>", fairyNo:"Every year you wait costs you ~$30K at retirement. Just so you know." },
+  { year:1, scene:"Rush Week", body:"Sorority dues are <em>$1,200/semester</em>. But the bid letter is in your hand.", yes:{label:"Accept bid", d:{wallet:-22, vibe:+20, career:+10}}, no:{label:"Pass", d:{wallet:+10, vibe:-12, career:-3}}, fairyYes:"Greek networks can pay off — but only if you actually use them.", fairyNo:"There are 100 ways to find your people in college. This was just one." },
+  { year:1, scene:"The Costco Venmo", body:"Roommate hit you with a <em>$34.50</em> Venmo for a Costco run you barely used.", yes:{label:"Just pay", d:{wallet:-5, vibe:+10}}, no:{label:"Itemize back", d:{wallet:+6, vibe:-10, career:+5}}, fairyYes:"Small generosities compound socially — but don't be the friend who's <em>always</em> paying.", fairyNo:"Negotiating small stuff trains you for the big stuff: salaries, rent, raises." },
+  { year:1, scene:"Textbook Hustle", body:"Econ 101 book: <em>$280</em> new, <em>$90</em> used, <em>$0</em> sketchy PDF from a Reddit user.", yes:{label:"Used copy", d:{wallet:-8, career:+8, future:+5}}, no:{label:"Find the PDF", d:{wallet:+4, career:-10}}, fairyYes:"Same content, 70% off. Your professor doesn't care which edition.", fairyNo:"Saved cash, but if problem numbers don't match the homework, your grade pays." },
+  { year:1, scene:"The Barista Offer", body:"Off-campus coffee shop: <em>$18/hr</em>, 15 hrs/week. Means dropping a club.", yes:{label:"Take it", d:{wallet:+18, career:+5, vibe:-10, future:+5}}, no:{label:"Stay in club", d:{wallet:-5, career:+10, vibe:+10}}, fairyYes:"Income now > image now. But protect that GPA — your degree is the bigger paycheck.", fairyNo:"Career capital compounds too. Sometimes the unpaid thing pays better in 3 years." },
+  { year:1, scene:"TikTok Made Me", body:"Your favorite creator dropped a <em>$180</em> skincare set. 'Treat yourself' energy is loud.", yes:{label:"Add to cart", d:{wallet:-14, vibe:+10, future:-5}}, no:{label:"Close the app", d:{wallet:+5, vibe:-4, future:+6}}, fairyYes:"Treating yourself isn't bad — making it a habit is. Set a 'fun money' budget, no guilt.", fairyNo:"The 'no' nobody sees you make is where wealth quietly happens." },
+  { year:1, scene:"Mom's Budgeting App", body:"Mom keeps sending you links to budgeting apps. She means well. She is also relentless.", yes:{label:"Set it up", d:{future:+18, wallet:+6, vibe:-8}}, no:{label:"Vibes only", d:{future:-10, wallet:-8, vibe:+5}}, fairyYes:"You can't grow what you can't see. 20 min/week beats 20 hours of panic later.", fairyNo:"Vibes-based budgeting works… until rent's due. Try it, fail, come back." },
+  { year:1, scene:"Period Pivot", body:"Switch to a menstrual cup (<em>$35</em> once) vs. keep buying tampons (<em>$15/mo</em>)?", yes:{label:"Try the cup", d:{wallet:+8, future:+6, vibe:-3}}, no:{label:"Stay the same", d:{wallet:-4, vibe:+4}}, fairyYes:"$180/yr saved for 30 years = <em>$5,400</em>. Small recurring wins are wealth's secret weapon.", fairyNo:"Convenience has a price. Just know you're paying it." },
+
+  // ============ SOPHOMORE ============
+  { year:2, scene:"Lease Signing", body:"Two options: 1 roommate at <em>$1,100/mo</em> your share, or 3 roommates at <em>$550/mo</em>.", yes:{label:"1 roommate", d:{wallet:-22, vibe:+15, future:-10}}, no:{label:"3 roommates", d:{wallet:+20, vibe:-10, future:+15}}, fairyYes:"Sometimes peace = priceless. But lifestyle creep starts here. Be honest about why.", fairyNo:"Extra $550/mo saved at 22 = <em>$1.4M</em> at 65. Roommates are an investment." },
+  { year:2, scene:"Bachelorette Tax", body:"Friend's bachelorette in Nashville: <em>$475</em> all-in. You barely know the bride.", yes:{label:"Go anyway", d:{wallet:-18, vibe:+10, future:-5}}, no:{label:"Decline kindly", d:{wallet:+6, vibe:-12}}, fairyYes:"Friendship tax is real. Just make sure the ROI matches what you're spending.", fairyNo:"'I can't afford it' is a complete sentence. Real friends understand." },
+  { year:2, scene:"Subscription Audit", body:"Spotify, Netflix, Hulu, Apple Music, Disney+, Paramount+. <em>$72/mo</em> total. Cancel three?", yes:{label:"Audit time", d:{wallet:+14, vibe:-5, future:+10}}, no:{label:"Keep all", d:{wallet:-10, vibe:+5}}, fairyYes:"$72/mo cut = <em>$864/year</em> you can spend with intention. Subscriptions count on you forgetting.", fairyNo:"$72/mo for 10 years = $8,640. Half your subscriptions don't even know you're alive." },
+  { year:2, scene:"Internship Fork", body:"Prestigious unpaid internship at the dream brand, OR mid-tier company paying <em>$22/hr</em>.", yes:{label:"Prestigious", d:{wallet:-15, career:+20, future:+5}}, no:{label:"Paid mid-tier", d:{wallet:+18, career:+8}}, fairyYes:"Brand-name internships open doors — but only take them if you can afford to.", fairyNo:"Money in your pocket + real experience > a logo on LinkedIn. Most days." },
+  { year:2, scene:"Laptop Decision", body:"Your laptop is dying. New one: <em>$1,200</em> cash, or 12 monthly payments at 0% APR.", yes:{label:"Pay cash", d:{wallet:-24, future:+10}}, no:{label:"12-mo plan", d:{wallet:-10, future:+5, vibe:+5}}, fairyYes:"Owning > owing. As long as it doesn't drain your emergency fund.", fairyNo:"0% APR is genuinely free money — IF you pay on time. <em>One late fee kills the deal.</em>" },
+  { year:2, scene:"Honors Housing", body:"Honors dorm opens up — <em>$300/mo cheaper</em>, quieter, less social. You'd save $3,600/year.", yes:{label:"Move in", d:{wallet:+18, vibe:-10, career:+10}}, no:{label:"Stay social", d:{wallet:-10, vibe:+12, future:-5}}, fairyYes:"$3,600/yr for two years = study abroad money. Or the start of a down payment.", fairyNo:"College memories ARE the ROI sometimes. But know what you're paying for." },
+  { year:2, scene:"Side Hustle Pick", body:"Tutor freshman calc at <em>$30/hr</em> (steady) OR resell vintage on Depop (variable, fun).", yes:{label:"Tutor", d:{wallet:+14, career:+10, vibe:-5}}, no:{label:"Depop store", d:{wallet:+5, career:+5, vibe:+10}}, fairyYes:"Tutoring builds a resume AND a paycheck. Both stocks go up.", fairyNo:"Depop teaches real business skills: pricing, branding, customer service. Track inventory." },
+  { year:2, scene:"Boutique Gym", body:"<em>$89/mo</em> Pilates studio you'll actually go to, vs. free rec center you mostly won't.", yes:{label:"Studio", d:{wallet:-13, vibe:+12, future:-5}}, no:{label:"Rec center", d:{wallet:+6, vibe:-6, future:+6}}, fairyYes:"If it's the only way you'll actually go, it pays for itself.", fairyNo:"Same gains, $1,000/year saved. Your body doesn't know it's a free gym." },
+  { year:2, scene:"Used Car Question", body:"Your old ride died. Used Civic for <em>$5,500</em> cash, or keep using rideshare?", yes:{label:"Buy car", d:{wallet:-28, vibe:+12, future:-10}}, no:{label:"Rideshare it", d:{wallet:+6, vibe:-10, future:+12}}, fairyYes:"Cars are wealth killers — insurance, gas, repairs. Worth it only if you really need one.", fairyNo:"$5,500 invested at 20 = <em>$80K</em> at 65. Rideshare is the cheaper limo." },
+  { year:2, scene:"Florence Calling", body:"Study abroad — Florence, spring semester. <em>$4,000</em> above tuition, would need a small loan.", yes:{label:"Go to Italy", d:{wallet:-18, vibe:+22, career:+10, future:-15}}, no:{label:"Stay put", d:{wallet:+6, vibe:-10, career:-3}}, fairyYes:"Some experiences earn back their cost in worldview alone. Read the loan terms first.", fairyNo:"Italy will still be there at 35 — with a passport and a bigger budget." },
+  { year:2, scene:"The MLM Pitch", body:"Friend invites you to her 'opportunity' — <em>$300</em> starter kit, 'be your own boss.'", yes:{label:"Join in", d:{wallet:-22, career:-10, future:-15, vibe:+8}}, no:{label:"Decline kindly", d:{wallet:+5, career:+5, future:+10, vibe:-5}}, fairyYes:"<em>73% of MLM participants lose money.</em> This is a red flag in a friendship bracelet.", fairyNo:"Saying no to an MLM is saying yes to your bank account AND your dignity." },
+
+  // ============ JUNIOR ============
+  { year:3, scene:"NYC Internship", body:"Summer internship in Manhattan: <em>$24/hr</em>. But rent for a closet there is <em>$1,800/mo</em>.", yes:{label:"Take it", d:{wallet:-12, career:+25, vibe:+12, future:+5}}, no:{label:"Stay local", d:{wallet:+10, career:+6, vibe:-5}}, fairyYes:"Big-city internships pay in network, not cash. Plan housing math <em>before</em> saying yes.", fairyNo:"Local can mean less competition for full-time offers. Sometimes the smart move is the boring one." },
+  { year:3, scene:"First Negotiation", body:"Internship offer: <em>$50K</em> equivalent. You researched the market — <em>$58K</em> is fair.", yes:{label:"Counter", d:{wallet:+18, career:+15, vibe:-5}}, no:{label:"Accept it", d:{career:-8, future:-12}}, fairyYes:"Women negotiate <em>30% less often</em> than men. Every $8K is $250K+ over a career.", fairyNo:"Your first salary anchors every raise after. Negotiate now or live with it forever." },
+  { year:3, scene:"Birthday Money", body:"Aunt sent <em>$500</em> for your birthday. Index fund or that meme stock from TikTok?", yes:{label:"Index fund", d:{future:+22, wallet:+4}}, no:{label:"Meme stock", d:{future:-15, vibe:+10, wallet:-5}}, fairyYes:"S&P 500 = boring + 10% historical return. <em>Boring is the cheat code.</em>", fairyNo:"Speculation is gambling with extra steps. Have fun money, but never bet rent." },
+  { year:3, scene:"Cosign Request", body:"Roommate wants you to cosign her credit card. <em>'I'll never miss a payment, promise.'</em>", yes:{label:"Cosign", d:{future:-22, vibe:+8}}, no:{label:"Decline", d:{future:+12, vibe:-10}}, fairyYes:"If she misses ONE payment, YOUR credit tanks for 7 years. <em>Love is not collateral.</em>", fairyNo:"Saying no protected your credit AND the friendship. Never cosign for anyone." },
+  { year:3, scene:"Career Fair Fit", body:"Tomorrow's career fair. <em>$220</em> blazer that fits perfectly, or thrift one for $20?", yes:{label:"Buy nice", d:{wallet:-10, career:+12}}, no:{label:"Thrift it", d:{wallet:+5, career:+4, vibe:+5}}, fairyYes:"A great-fitting blazer is a career asset. Cost-per-wear over 4 years = pennies.", fairyNo:"Hiring managers care about you, not your tag. Thrift looks great on camera." },
+  { year:3, scene:"HSA Confusion", body:"Summer job offers HSA: <em>$50/mo pretax</em>. HR didn't explain it. You're healthy.", yes:{label:"Opt in", d:{future:+18, wallet:-5}}, no:{label:"Skip it", d:{future:-8, wallet:+6}}, fairyYes:"HSA = the only <em>triple-tax-advantaged</em> account. Most powerful retirement tool nobody talks about.", fairyNo:"If you're healthy, HSA is free money. You'll find out the hard way at 35." },
+  { year:3, scene:"Grad School Prep", body:"<em>$1,500</em> LSAT/GRE course (live, structured) or self-study with library books?", yes:{label:"Take course", d:{wallet:-18, career:+15, future:+5}}, no:{label:"Self-study", d:{wallet:+5, career:+4, vibe:-8}}, fairyYes:"Test scores = scholarship money. <em>$1,500 in</em> can mean $30K off tuition.", fairyNo:"Self-study works for the disciplined. Be honest about which you are." },
+  { year:3, scene:"Networking Night", body:"<em>$50</em> ticket to an alumni mixer. Three people from your dream company confirmed.", yes:{label:"Go", d:{wallet:-5, career:+22, vibe:-5}}, no:{label:"Skip", d:{wallet:+5, career:-10}}, fairyYes:"<em>$50 for a single warm intro</em> is the cheapest ROI in your entire career.", fairyNo:"Networking feels gross until you realize it's just being curious about people on purpose." },
+  { year:3, scene:"Filler Energy", body:"Bestie's getting lip filler (<em>$600</em>). She wants you to 'come for support' (and do it too).", yes:{label:"Get it too", d:{wallet:-18, vibe:+10, future:-10}}, no:{label:"Just support", d:{vibe:-5, future:+6}}, fairyYes:"Cosmetic stuff isn't 'bad spending' — but it IS recurring. Filler is a $600/yr subscription.", fairyNo:"You don't have to match every choice your friends make. That's a money skill AND a life one." },
+  { year:3, scene:"Therapy Now", body:"School has free therapy with 6-week wait, OR <em>$150/session</em> privately, this week.", yes:{label:"Pay now", d:{wallet:-14, vibe:+18, career:+5}}, no:{label:"Wait", d:{wallet:+5, vibe:-12}}, fairyYes:"<em>Mental health IS financial health.</em> Burnout costs more than therapy.", fairyNo:"Free is real money saved. Just don't white-knuckle it if you're really not okay." },
+  { year:3, scene:"Salary Transparency", body:"Older coworker casually mentions her pay. She makes <em>$12K more</em> than you for the same role.", yes:{label:"Ask for review", d:{wallet:+15, career:+15, vibe:-5}}, no:{label:"Stay quiet", d:{wallet:-5, career:-10, vibe:+5}}, fairyYes:"Pay transparency is a feature, not a bug. Data is your best negotiation tool.", fairyNo:"The gap doesn't close by itself. It grows." },
+
+  // ============ SENIOR ============
+  { year:4, scene:"The Big Choice", body:"Dream company offer: <em>$58K</em>. Boring company offer: <em>$78K</em>. Same start date.", yes:{label:"Dream job", d:{wallet:-8, career:+22, vibe:+15, future:+5}}, no:{label:"Boring + money", d:{wallet:+22, career:+5, vibe:-10, future:+12}}, fairyYes:"Career capital matters most in your 20s. Sometimes you pay tuition to your future.", fairyNo:"<em>$20K extra/year</em> is a paid-off car, a maxed Roth, and an emergency fund — every year." },
+  { year:4, scene:"The 401(k)", body:"New job offers 401(k) match up to 6%. Default is 0%. HR didn't push it.", yes:{label:"Max the match", d:{future:+25, wallet:-5}}, no:{label:"Skip for now", d:{future:-22, wallet:+8}}, fairyYes:"Employer match = a <em>100% instant return</em>. Refusing it is leaving free money on the table.", fairyNo:"You just turned down a raise. Go fix this on Monday." },
+  { year:4, scene:"Counter Offer", body:"Recruiter said 'best and final.' Your gut says the number's still flexible.", yes:{label:"Counter anyway", d:{wallet:+18, career:+15, vibe:-5}}, no:{label:"Accept it", d:{wallet:0, career:-10}}, fairyYes:"<em>'Best and final' is a script.</em> Counter politely — 73% of negotiations succeed.", fairyNo:"You'll get raises, but they're all a % of this number. Always counter." },
+  { year:4, scene:"Greece Trip", body:"Senior trip to Santorini with 5 best friends: <em>$2,300</em> all-in. Last summer like this.", yes:{label:"Pack a bag", d:{wallet:-24, vibe:+22, future:-10}}, no:{label:"Stay back", d:{wallet:+10, vibe:-15}}, fairyYes:"Some moments only exist once. <em>Just don't put it on a credit card.</em>", fairyNo:"Greece will be cheaper at 30 when you can actually afford it." },
+  { year:4, scene:"City vs. Town", body:"Move to NYC for the job (rent <em>$2,400</em>) or take the WFH offer in your college town (<em>$900</em>)?", yes:{label:"NYC", d:{wallet:-24, career:+20, vibe:+15, future:-5}}, no:{label:"WFH local", d:{wallet:+22, career:-3, vibe:-10, future:+15}}, fairyYes:"Cities are career accelerators in your 20s. The cost is real but so are the connections.", fairyNo:"<em>$18K/yr saved</em> in your first job out = generational wealth math. Geography is leverage." },
+  { year:4, scene:"The Card Balance", body:"Credit card balance: <em>$1,800 at 24% APR</em>. Emergency fund: $0. First real paycheck just hit.", yes:{label:"Kill the card", d:{wallet:-14, future:+22, vibe:-5}}, no:{label:"E-fund first", d:{wallet:-10, future:+10, vibe:+6}}, fairyYes:"<em>24% APR is a financial fire.</em> Always put out fires before storing water.", fairyNo:"Solid logic, but at 24% you're losing money every month you wait." },
+  { year:4, scene:"Wedding Season", body:"Four weddings this summer. Travel + gifts + dresses ≈ <em>$1,400</em> total.", yes:{label:"Go to all", d:{wallet:-22, vibe:+15, future:-10}}, no:{label:"Decline two", d:{wallet:-3, vibe:-5, future:+8}}, fairyYes:"Be present in your friends' lives — within reason. Set a wedding budget BEFORE saying yes.", fairyNo:"Real friends don't keep score. <em>Two thoughtful gifts > four resentful trips.</em>" },
+  { year:4, scene:"Interview Wardrobe", body:"Job hunting hard. Buy 2 interview suits (<em>$600</em>) or rent per round at $90 each?", yes:{label:"Buy them", d:{wallet:-13, career:+10, future:+5}}, no:{label:"Rent each", d:{wallet:-5, career:+5}}, fairyYes:"If you'll interview 6+ times in 2 years, buying wins. After that, it's free.", fairyNo:"Rental works for short hunts. Just don't get caught in the same dress twice." },
+  { year:4, scene:"Signing Bonus", body:"Bonus options: <em>$5,000 cash now</em> OR <em>$7,000 in company stock</em> vesting in 2 years.", yes:{label:"Take cash", d:{wallet:+22, future:-5}}, no:{label:"Take stock", d:{wallet:-5, future:+20, career:+5}}, fairyYes:"Cash is certain. If you have debt or no e-fund, this is the right call.", fairyNo:"If the company's healthy and you have runway, vesting almost always wins." },
+  { year:4, scene:"Graduation Glam", body:"Grad week: <em>$400</em> dress + <em>$300</em> photos + <em>$200</em> family dinner.", yes:{label:"Full glam", d:{wallet:-18, vibe:+15}}, no:{label:"Keep it low-key", d:{wallet:+10, vibe:-5}}, fairyYes:"Ceremony moments matter. Just don't go into debt for one Sunday.", fairyNo:"Photos exist on every phone in your family already. Save the $900." },
+  { year:4, scene:"Health Insurance", body:"You age off your parents' plan in 6 months. Sign up for employer plan now, or wait?", yes:{label:"Sign up now", d:{wallet:-8, future:+18, vibe:+5}}, no:{label:"Wait it out", d:{wallet:+5, future:-15, vibe:-8}}, fairyYes:"One ER visit uninsured = $5,000+. The 'cheap' move is always coverage.", fairyNo:"<em>62% of personal bankruptcies</em> involve medical debt. Don't be a statistic." },
+];
+
+// ---------- STATE ----------
+const STATE = {
+  screen: 'splash',
+  name: '',
+  stats: { wallet:50, career:50, vibe:50, future:50 },
+  cardIdx: 0,
+  history: [],
+  currentYear: 1,
+  deadStat: null,
+  drag: { active:false, x:0, startX:0, startY:0 },
+};
+
+const STATS_META = [
+  { key:'wallet', icon:'💰', label:'Wallet' },
+  { key:'career', icon:'🎯', label:'Career' },
+  { key:'vibe',   icon:'✨', label:'Vibe' },
+  { key:'future', icon:'🔮', label:'Future' },
+];
+
+const YEAR_NAMES = ['', 'Freshman', 'Sophomore', 'Junior', 'Senior'];
+const YEAR_SUBS  = ['', 'It begins.', 'Sharper edges.', 'The stakes rise.', 'Everything ends, beautifully.'];
+
+// ---------- RENDER ----------
+const app = document.getElementById('app');
+
+function render() {
+  if (STATE.screen === 'splash')   return renderSplash();
+  if (STATE.screen === 'onboard')  return renderOnboard();
+  if (STATE.screen === 'game')     return renderGame();
+  if (STATE.screen === 'death')    return renderEnd('death');
+  if (STATE.screen === 'win')      return renderEnd('win');
+}
+
+function renderSplash() {
+  app.innerHTML = `
+    <div class="splash">
+      <div class="eyebrow">— A Smart Money Moves Game —</div>
+      <h1>Money<br><em>Moves</em></h1>
+      <div class="rule"></div>
+      <p class="tagline">"Four years. Four stats. One you, four years older — richer, wiser, or completely undone."</p>
+      <div class="meta">
+        <div><b>44</b> Decisions</div>
+        <div><b>4</b> Years</div>
+        <div><b>∞</b> Outcomes</div>
+      </div>
+      <button class="btn" onclick="goOnboard()">Begin <span class="arrow">→</span></button>
+      <div class="brand-footer">Group 10 · Fidelity Careers Challenge</div>
+    </div>
+  `;
+}
+
+function renderOnboard() {
+  app.innerHTML = `
+    <div class="onboard">
+      <div class="step">Before we begin</div>
+      <h2>What should we<br>call you, <em>darling?</em></h2>
+      <p>Your fairy godmother is on her way. She'd like to know your name first.</p>
+      <input class="field" id="nameInput" placeholder="your name" maxlength="20" autocomplete="off">
+      <div class="actions">
+        <button class="btn-ghost btn" onclick="STATE.screen='splash';render()">Back</button>
+        <button class="btn" onclick="startGame()">Start simulation <span class="arrow">→</span></button>
+      </div>
+    </div>
+  `;
+  const inp = document.getElementById('nameInput');
+  inp.focus();
+  inp.addEventListener('keydown', e => { if (e.key==='Enter') startGame(); });
+}
+
+function goOnboard() { STATE.screen = 'onboard'; render(); }
+
+function startGame() {
+  const inp = document.getElementById('nameInput');
+  STATE.name = (inp.value || 'friend').trim() || 'friend';
+  STATE.screen = 'game';
+  STATE.stats = { wallet:50, career:50, vibe:50, future:50 };
+  STATE.cardIdx = 0;
+  STATE.history = [];
+  STATE.currentYear = 1;
+  STATE.deadStat = null;
+  showYearSplash(1, render);
+}
+
+function renderGame() {
+  const card = DECK[STATE.cardIdx];
+  if (!card) { STATE.screen = 'win'; return render(); }
+
+  // Year transition check
+  if (card.year !== STATE.currentYear) {
+    STATE.currentYear = card.year;
+    showYearSplash(card.year, renderGameInner);
+    return;
+  }
+
+  renderGameInner();
+}
+
+function renderGameInner() {
+  const card = DECK[STATE.cardIdx];
+  const next = DECK[STATE.cardIdx+1];
+  const next2 = DECK[STATE.cardIdx+2];
+
+  app.innerHTML = `
+    <div class="game">
+      <div class="topbar">
+        <div class="year-chip"><span class="dot"></span><b>Year ${card.year}</b> · ${YEAR_NAMES[card.year]}</div>
+        <div class="progress">${(STATE.cardIdx+1).toString().padStart(2,'0')} / ${DECK.length}</div>
+      </div>
+      <div class="hud" id="hud">
+        ${STATS_META.map(s => statTile(s)).join('')}
+      </div>
+      <div class="card-area" id="cardArea">
+        ${next2 ? cardHTML(next2, 'behind-2') : ''}
+        ${next ? cardHTML(next, 'behind') : ''}
+        ${cardHTML(card, '', true)}
+      </div>
+      <div class="choices">
+        <button class="choice-btn no" onclick="choose('no')">
+          <span class="ch-label">← swipe left</span>
+          <span class="ch-text">${card.no.label}</span>
+        </button>
+        <button class="choice-btn yes" onclick="choose('yes')">
+          <span class="ch-label">swipe right →</span>
+          <span class="ch-text">${card.yes.label}</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  attachDrag();
+}
+
+function statTile(s) {
+  const v = STATE.stats[s.key];
+  let cls = '';
+  if (v <= 20) cls = 'danger';
+  else if (v <= 35) cls = 'warn';
+  return `
+    <div class="stat ${cls}" data-key="${s.key}">
+      <div class="icon">${s.icon}</div>
+      <div class="label">${s.label}</div>
+      <div class="value" id="val-${s.key}">${v}</div>
+      <div class="bar"><div class="bar-fill" style="width:${v}%"></div></div>
+    </div>
+  `;
+}
+
+function cardHTML(card, extraClass, isTop) {
+  return `
+    <div class="card ${extraClass}" ${isTop ? 'id="topCard"' : ''}>
+      <div class="card-corner">M.M. ${(STATE.cardIdx+(extraClass==='behind'?2:extraClass==='behind-2'?3:1)).toString().padStart(2,'0')}</div>
+      <div class="card-num">Year ${card.year} · ${YEAR_NAMES[card.year]}</div>
+      <div class="card-scene">${card.scene}</div>
+      <div class="card-body">${card.body}</div>
+      <div class="card-footer">
+        <div class="choice-hint left">← ${card.no.label}</div>
+        <div class="choice-hint right">${card.yes.label} →</div>
+      </div>
+      ${isTop ? `
+        <div class="stamp yes" id="stampYes">${card.yes.label}</div>
+        <div class="stamp no" id="stampNo">${card.no.label}</div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ---------- DRAG / SWIPE ----------
+function attachDrag() {
+  const card = document.getElementById('topCard');
+  if (!card) return;
+
+  let dragging = false;
+  let startX = 0, startY = 0, curX = 0;
+  const stampYes = card.querySelector('#stampYes');
+  const stampNo  = card.querySelector('#stampNo');
+
+  function onDown(e) {
+    if (e.target.closest('.choice-btn')) return;
+    dragging = true;
+    const p = pt(e);
+    startX = p.x; startY = p.y; curX = 0;
+    card.classList.add('dragging');
+    card.setPointerCapture && e.pointerId !== undefined && card.setPointerCapture(e.pointerId);
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const p = pt(e);
+    curX = p.x - startX;
+    const dy = p.y - startY;
+    if (Math.abs(dy) > Math.abs(curX) * 1.5 && Math.abs(dy) > 30) {
+      // probably scrolling, abandon
+      return;
+    }
+    const rot = curX * 0.06;
+    card.style.transform = `translate(${curX}px, ${Math.abs(curX)*0.05}px) rotate(${rot}deg)`;
+    if (stampYes) stampYes.style.opacity = Math.max(0, Math.min(1, curX / 90));
+    if (stampNo)  stampNo.style.opacity  = Math.max(0, Math.min(1, -curX / 90));
+    e.preventDefault && e.preventDefault();
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    card.classList.remove('dragging');
+    const threshold = 110;
+    if (curX > threshold) {
+      flyOff(card, 1);
+      choose('yes');
+    } else if (curX < -threshold) {
+      flyOff(card, -1);
+      choose('no');
+    } else {
+      card.style.transition = 'transform .3s cubic-bezier(.2,.7,.2,1)';
+      card.style.transform = '';
+      if (stampYes) stampYes.style.opacity = 0;
+      if (stampNo)  stampNo.style.opacity  = 0;
+      setTimeout(()=>{ card.style.transition = ''; }, 320);
+    }
+  }
+  function pt(e) {
+    if (e.touches && e.touches[0]) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+    if (e.changedTouches && e.changedTouches[0]) return { x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY };
+    return { x:e.clientX, y:e.clientY };
+  }
+
+  card.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+}
+
+function flyOff(card, dir) {
+  card.style.transition = 'transform .45s cubic-bezier(.4,0,.6,1), opacity .45s';
+  card.style.transform = `translate(${dir*window.innerWidth*1.2}px, 100px) rotate(${dir*30}deg)`;
+  card.style.opacity = '0';
+  card.style.pointerEvents = 'none';
+}
+
+// ---------- CHOICE HANDLER ----------
+let choosing = false;
+function choose(which) {
+  if (choosing) return;
+  choosing = true;
+  const card = DECK[STATE.cardIdx];
+  const choice = card[which];
+  const deltas = choice.d;
+  const fairy = which==='yes' ? card.fairyYes : card.fairyNo;
+
+  // Apply deltas with animation
+  Object.keys(deltas).forEach(k => {
+    const delta = deltas[k];
+    STATE.stats[k] = Math.max(0, Math.min(100, STATE.stats[k] + delta));
+    animateStat(k, delta);
+  });
+
+  STATE.history.push({ cardIdx: STATE.cardIdx, choice: which, deltas, year: card.year });
+
+  // Check death
+  const dead = STATS_META.find(s => STATE.stats[s.key] <= 0);
+
+  setTimeout(() => {
+    showFairy(fairy, choice.label, () => {
+      if (dead) {
+        STATE.deadStat = dead;
+        STATE.screen = 'death';
+        choosing = false;
+        render();
+        return;
+      }
+      STATE.cardIdx++;
+      if (STATE.cardIdx >= DECK.length) {
+        STATE.screen = 'win';
+        choosing = false;
+        render();
+        return;
+      }
+      choosing = false;
+      renderGame();
+    });
+  }, 650);
+}
+
+function animateStat(key, delta) {
+  const el = document.querySelector(`.stat[data-key="${key}"]`);
+  if (!el) return;
+  el.classList.remove('flash-up','flash-down');
+  void el.offsetWidth;
+  el.classList.add(delta >= 0 ? 'flash-up' : 'flash-down');
+
+  // delta pop
+  const pop = document.createElement('div');
+  pop.className = 'delta-pop' + (delta < 0 ? ' down' : '');
+  pop.textContent = (delta > 0 ? '+' : '') + delta;
+  el.appendChild(pop);
+  setTimeout(()=>pop.remove(), 1300);
+
+  // update value display
+  const valEl = document.getElementById('val-'+key);
+  if (valEl) {
+    const target = STATE.stats[key];
+    let cur = parseInt(valEl.textContent);
+    const step = target > cur ? 1 : -1;
+    const tick = () => {
+      if (cur === target) return;
+      cur += step;
+      valEl.textContent = cur;
+      if (cur !== target) requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  // update bar
+  const bar = el.querySelector('.bar-fill');
+  if (bar) bar.style.width = STATE.stats[key] + '%';
+
+  // re-evaluate warn/danger class
+  const v = STATE.stats[key];
+  el.classList.remove('warn','danger');
+  if (v <= 20) el.classList.add('danger');
+  else if (v <= 35) el.classList.add('warn');
+}
+
+// ---------- FAIRY POPUP ----------
+function showFairy(text, choiceLabel, onClose) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fairy';
+  overlay.innerHTML = `
+    <div class="fairy-card">
+      <div class="fairy-eyebrow"><span class="ornament"></span>Your Fairy Godmother<span class="ornament"></span></div>
+      <div class="fairy-title">"You chose <em>${choiceLabel}</em>."</div>
+      <div class="fairy-body">${text}</div>
+      <button class="fairy-btn" id="fairyDismiss">Continue</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => { overlay.remove(); onClose && onClose(); };
+  document.getElementById('fairyDismiss').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+}
+
+// ---------- YEAR TRANSITION ----------
+function showYearSplash(year, next) {
+  const el = document.createElement('div');
+  el.className = 'year-splash';
+  el.innerHTML = `
+    <div class="num">Year ${year} of 4</div>
+    <div class="title">${YEAR_NAMES[year]}</div>
+    <div class="sub">${YEAR_SUBS[year]}</div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => { el.remove(); next && next(); }, 1400);
+}
+
+// ---------- END SCREENS ----------
+function renderEnd(kind) {
+  const { name } = STATE;
+  const stats = STATE.stats;
+  let title, eyebrow, sub, summary;
+
+  if (kind === 'death') {
+    const dead = STATE.deadStat;
+    const yearReached = YEAR_NAMES[STATE.currentYear];
+    eyebrow = `Game Over · ${yearReached} Year`;
+    title = `Your <em>${dead.label.toLowerCase()}</em> ran out.`;
+    sub = deathSub(dead.key);
+    summary = deathSummary(dead.key, name);
+  } else {
+    // Win
+    eyebrow = `Senior Year · Complete`;
+    title = `You made it, <em>${name}.</em>`;
+    sub = winSub(stats);
+    summary = winSummary(stats, name);
+    spawnConfetti();
+  }
+
+  app.innerHTML = `
+    <div class="end ${kind}">
+      <div class="eyebrow">— ${eyebrow} —</div>
+      <h2>${title}</h2>
+      <p class="sub">${sub}</p>
+      <div class="end-stats">
+        ${STATS_META.map(s => `
+          <div class="end-stat">
+            <div class="l">${s.icon} ${s.label}</div>
+            <div class="v">${stats[s.key]}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="end-summary">
+        <div class="label">A note from your fairy godmother</div>
+        <p>${summary}</p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="STATE.screen='splash';render()">Play again</button>
+        <button class="btn btn-ghost" onclick="copyResult()">Share result</button>
+      </div>
+      <div class="brand-footer">Group 10 · Fidelity Careers Challenge</div>
+    </div>
+  `;
+}
+
+function deathSub(key) {
+  return {
+    wallet: "You spent yourself into a corner. It happens to almost everyone — once.",
+    career: "Your career capital dried up. The good news: it rebuilds faster than you think.",
+    vibe:   "Burnout came for you. No paycheck is worth this.",
+    future: "Future-you sent a postcard. It said: 'please start saving.'",
+  }[key];
+}
+
+function deathSummary(key, name) {
+  return {
+    wallet: `${name}, the average American 22-year-old carries <em>$3,300</em> in credit card debt. You weren't unlucky — you were just unguided. Try again: split every paycheck, audit subscriptions, and remember: <em>'no'</em> is a financial tool.`,
+    career: `${name}, careers aren't sprints. The internships you skip and the negotiations you avoid compound just like investments do. Next run: take the harder internship, counter the offer, go to one networking thing.`,
+    vibe:   `${name}, burnout is a financial disaster, not a personality flaw. Therapy, gym, friends, and time off aren't luxuries — they're protection. Build the rest of your life around the cost of <em>not</em> falling apart.`,
+    future: `${name}, future-you isn't abstract — she's the woman buying a house at 32, retiring at 60, or panicking at 45. Roth at 19, 401(k) match always, never cosign. The future is built on three or four boring decisions.`,
+  }[key];
+}
+
+function winSub(stats) {
+  const total = stats.wallet+stats.career+stats.vibe+stats.future;
+  if (total >= 280) return "You didn't just survive college. You graduated rich, sharp, well, and ready.";
+  if (total >= 220) return "Solid run. You leave college with the foundation most people spend a decade rebuilding.";
+  if (total >= 160) return "You made it through. Bruised, smarter, and three good decisions away from thriving.";
+  return "Senior year, by the skin of your teeth. The best financial education comes from the mistakes you survived.";
+}
+
+function winSummary(stats, name) {
+  // Identify weakest + strongest
+  const sorted = STATS_META.map(s => ({...s, v: stats[s.key]})).sort((a,b)=>b.v-a.v);
+  const best = sorted[0], worst = sorted[3];
+  const projection = Math.round(stats.future * 10000 * (1 + stats.wallet/200));
+  return `Strongest: <em>${best.label}</em> at ${best.v}. Watch: <em>${worst.label}</em> at ${worst.v}. If your <em>Future</em> stat were a 401(k) balance compounded 40 years at 7%, you'd retire with roughly <em>$${projection.toLocaleString()}</em>. ${name}, the real game starts now — and you already know the rules.`;
+}
+
+function spawnConfetti() {
+  const colors = ['#B89855','#D4654A','#1E3A2E','#C77985','#D4B97A'];
+  for (let i=0; i<60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.background = colors[i%colors.length];
+    p.style.animationDelay = (Math.random()*1.5) + 's';
+    p.style.animationDuration = (3 + Math.random()*2) + 's';
+    p.style.transform = `rotate(${Math.random()*360}deg)`;
+    p.style.borderRadius = i%3===0 ? '50%' : '2px';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 6000);
+  }
+}
+
+function copyResult() {
+  const s = STATE.stats;
+  const txt = `I played Money Moves and finished college with:
+💰 Wallet ${s.wallet} | 🎯 Career ${s.career} | ✨ Vibe ${s.vibe} | 🔮 Future ${s.future}
+Smart Money Moves — built for the Fidelity Careers Challenge.`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(()=>{
+      alert("Copied! Paste it anywhere.");
+    });
+  }
+}
+
+// expose
+window.goOnboard = goOnboard;
+window.startGame = startGame;
+window.choose = choose;
+window.copyResult = copyResult;
+
+// boot
+render();
+</script>
+</body>
+</html>
