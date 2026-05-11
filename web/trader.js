@@ -25,8 +25,11 @@
     epic:     { label: 'Epic',     span: '10 years', ticks: 120, tickMs: 1500, granularity: 'monthly', emoji: '✦', description: '10 years in ~3 minutes. Crashes, booms, the works.' },
   };
 
-  const STARTING_CASH = 10000;
+  const DEFAULT_STARTING_CASH = 10000;
+  const MIN_STARTING_CASH = 1;
+  const MAX_STARTING_CASH = 100_000_000;
   const STORAGE_KEY = 'paper-trader.bests.v1';
+  const BALANCE_KEY = 'paper-trader.balance.v1';
 
   // -------------------- Data slicing --------------------
 
@@ -178,8 +181,24 @@
     this.game = null;
     this.timer = null;
     this.bests = readBests();
+    this.startingBalance = readSavedBalance();
     this.universeMeta = window.PAPER_TRADER_DATA.map(s => ({ symbol: s.symbol, name: s.name, flavor: s.flavor, risk: s.risk }));
     this.renderLobby();
+  }
+
+  function readSavedBalance() {
+    try {
+      const n = Number(localStorage.getItem(BALANCE_KEY));
+      if (Number.isFinite(n) && n >= MIN_STARTING_CASH && n <= MAX_STARTING_CASH) return n;
+    } catch (e) {}
+    return DEFAULT_STARTING_CASH;
+  }
+  function writeSavedBalance(n) {
+    try { localStorage.setItem(BALANCE_KEY, String(n)); } catch (e) {}
+  }
+  function clampBalance(n) {
+    if (!Number.isFinite(n)) return DEFAULT_STARTING_CASH;
+    return Math.max(MIN_STARTING_CASH, Math.min(MAX_STARTING_CASH, Math.round(n)));
   }
 
   PaperTraderApp.prototype.clearTimer = function () {
@@ -189,16 +208,20 @@
   PaperTraderApp.prototype.startRun = function (mode) {
     this.clearTimer();
     const ticks = sliceRun(mode);
+    const startingCash = clampBalance(this.startingBalance);
+    this.startingBalance = startingCash;
+    writeSavedBalance(startingCash);
     this.game = {
       mode,
       ticks,
       currentTick: 0,
       isPaused: false,
-      cash: STARTING_CASH,
+      startingCash,
+      cash: startingCash,
       holdings: {},
-      history: [STARTING_CASH],
+      history: [startingCash],
       assetsTouched: new Set(),
-      maxValue: STARTING_CASH,
+      maxValue: startingCash,
       maxDrawdown: 0,
       startedAt: Date.now(),
     };
@@ -264,11 +287,11 @@
     const last = g.ticks[g.ticks.length - 1].prices;
     let final = g.cash;
     for (const t in g.holdings) final += (last[t] || 0) * g.holdings[t].shares;
-    const finalReturn = (final - STARTING_CASH) / STARTING_CASH;
+    const finalReturn = (final - g.startingCash) / g.startingCash;
     const vtiStart = first['VTI'];
     const vtiEnd = last['VTI'];
     const vtiReturn = vtiStart > 0 ? (vtiEnd - vtiStart) / vtiStart : 0;
-    const vtiSeries = g.ticks.map(t => (t.prices['VTI'] / vtiStart) * STARTING_CASH);
+    const vtiSeries = g.ticks.map(t => (t.prices['VTI'] / vtiStart) * g.startingCash);
     let bestSym = 'VTI', bestRet = -Infinity;
     for (const sym in first) {
       const s = first[sym], e = last[sym];
@@ -289,6 +312,7 @@
       mode: g.mode,
       startDate: g.ticks[0].date,
       endDate: g.ticks[g.ticks.length - 1].date,
+      startingCash: g.startingCash,
       finalValue: final,
       finalReturn, vtiReturn,
       bestSingleSymbol: bestSym, bestSingleReturn: bestRet,
@@ -330,6 +354,55 @@
       h('p', { class: 'pt-body' }, 'Rewind real market history. Compress months into minutes. Try to beat the diversified baseline. Practice for free, learn for life.'),
     ]);
     content.appendChild(intro);
+
+    // Starting balance input
+    const self = this;
+    const balanceInput = h('input', {
+      type: 'number',
+      class: 'pt-balance-input',
+      value: String(this.startingBalance),
+      min: String(MIN_STARTING_CASH),
+      max: String(MAX_STARTING_CASH),
+      step: '1',
+      inputmode: 'numeric',
+      'aria-label': 'Starting balance',
+    });
+    balanceInput.addEventListener('input', (e) => {
+      const raw = e.target.value.trim();
+      if (raw === '') return; // allow empty mid-edit
+      const n = Number(raw);
+      if (Number.isFinite(n)) self.startingBalance = n;
+    });
+    balanceInput.addEventListener('blur', (e) => {
+      const n = clampBalance(Number(e.target.value));
+      self.startingBalance = n;
+      balanceInput.value = String(n);
+      writeSavedBalance(n);
+    });
+    const presetRow = h('div', { class: 'pt-balance-presets' });
+    [['$100', 100], ['$1k', 1000], ['$10k', 10000], ['$100k', 100000]].forEach(([label, val]) => {
+      const btn = h('button', { type: 'button', class: 'pt-preset-btn' }, label);
+      btn.addEventListener('click', () => {
+        self.startingBalance = val;
+        balanceInput.value = String(val);
+        writeSavedBalance(val);
+        // visual active state
+        presetRow.querySelectorAll('.pt-preset-btn').forEach(b => b.classList.toggle('pt-preset-active', b === btn));
+      });
+      if (val === this.startingBalance) btn.classList.add('pt-preset-active');
+      presetRow.appendChild(btn);
+    });
+
+    const balanceCard = h('div', { class: 'pt-card pt-fadeup', style: { animationDelay: '40ms' } }, [
+      h('p', { class: 'pt-label' }, 'Input: starting balance'),
+      h('div', { class: 'pt-balance-row' }, [
+        h('span', { class: 'pt-balance-prefix' }, '$'),
+        balanceInput,
+      ]),
+      h('p', { class: 'pt-caption', style: { marginTop: '8px' } }, "How much do you want to start with? This is what you'll trade with — no real money."),
+      presetRow,
+    ]);
+    content.appendChild(balanceCard);
 
     Object.keys(MODES).forEach((mode, i) => {
       const m = MODES[mode];
@@ -578,7 +651,7 @@
     content.appendChild(h('div', { class: 'pt-fadeup' }, [
       h('p', { class: 'pt-eyebrow' }, 'your run'),
       h('h1', { class: 'pt-display' }, s.beatBenchmark ? 'You beat VTI.' : "You didn't beat VTI."),
-      h('p', { class: 'pt-caption' }, s.startDate + ' → ' + s.endDate),
+      h('p', { class: 'pt-caption' }, '$' + fmt(s.startingCash) + ' → $' + fmt(s.finalValue) + ' • ' + s.startDate + ' → ' + s.endDate),
     ]));
 
     // Chart card

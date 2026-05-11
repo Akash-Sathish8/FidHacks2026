@@ -55,7 +55,7 @@ That's it. No CSS resets clash because every class is `.pt-` prefixed.
 
 ## What the user sees
 
-1. **Lobby:** Pick Sprint / Standard / Epic. Each shows best-ever return (saved to `localStorage`).
+1. **Lobby:** Enter a starting balance (input, with $100 / $1k / $10k / $100k preset chips — persists in `localStorage`). Pick Sprint / Standard / Epic. Each shows best-ever return.
 2. **Game:** Real historical prices tick forward. Tap any asset card to open a buy/sell bottom sheet with a slider. HUD shows portfolio value, cash, positions, animated chart.
 3. **Result:** Three-way comparison (You / VTI / Best Single Stock) + diversification scorecard + coach note + Play Again button.
 
@@ -79,14 +79,18 @@ require('fs').writeFileSync('web/data.js', 'window.PAPER_TRADER_DATA = ' + JSON.
 
 Edit the `TICKERS` array in `scripts/fetch-history.ts`, rerun, regenerate `data.js`.
 
-### Change durations or starting cash
+### Change durations or default starting cash
 
 In `trader.js`:
 
 ```js
-const MODES = { ... };          // edit ticks/tickMs/granularity per mode
-const STARTING_CASH = 10000;    // edit
+const MODES = { ... };                  // edit ticks/tickMs/granularity per mode
+const DEFAULT_STARTING_CASH = 10000;    // initial value of the balance input
+const MIN_STARTING_CASH = 1;            // clamp lower bound
+const MAX_STARTING_CASH = 100_000_000;  // clamp upper bound
 ```
+
+The user enters their own balance at runtime; these only set defaults and the valid range.
 
 ### Style overrides
 
@@ -106,7 +110,8 @@ Override any of the `:root`-level CSS variables on `.pt-root`:
   mode: 'sprint' | 'standard' | 'epic',
   startDate: string,            // YYYY-MM-DD
   endDate: string,
-  finalValue: number,           // dollars
+  startingCash: number,         // the user-input starting balance
+  finalValue: number,           // dollars at end of run
   finalReturn: number,          // pct as decimal, e.g. 0.18 = +18%
   vtiReturn: number,            // baseline pct
   bestSingleSymbol: string,
