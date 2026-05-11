@@ -28,6 +28,8 @@
   const DEFAULT_STARTING_CASH = 10000;
   const MIN_STARTING_CASH = 1;
   const MAX_STARTING_CASH = 100_000_000;
+  const PREROLL = 5;            // hidden "warm-up" ticks before play starts so sparklines look populated
+  const FIRST_TICK_DELAY = 600; // ms before first real tick fires (subsequent ticks use MODES[m].tickMs)
   const STORAGE_KEY = 'paper-trader.bests.v1';
   const BALANCE_KEY = 'paper-trader.balance.v1';
 
@@ -46,22 +48,28 @@
     if (!history) throw new Error('PAPER_TRADER_DATA not loaded — include data.js before trader.js');
     const meta = MODES[mode];
     const gran = meta.granularity;
-    const series = (s) => gran === 'weekly' ? s.weekly : s.monthly;
-    const lengths = history.map((s) => series(s).length);
-    const minLen = Math.min(...lengths);
-    const ticksNeeded = meta.ticks;
-    const maxStart = minLen - ticksNeeded - 1;
-    if (maxStart < 0) throw new Error('not enough data for mode ' + mode);
+    const seriesOf = (s) => gran === 'weekly' ? s.weekly : s.monthly;
+    const totalNeeded = meta.ticks + PREROLL;
+
+    // Filter to tickers that have enough history at this granularity for this mode.
+    // (e.g. COIN only IPO'd in 2021, so it gets dropped from Epic 10y but kept in Sprint/Standard.)
+    const universe = history.filter((s) => seriesOf(s).length >= totalNeeded);
+    if (universe.length < 3) {
+      throw new Error('not enough assets with ' + meta.span + ' of history for ' + mode + ' mode');
+    }
+
+    const refSeries = universe.reduce((a, b) => seriesOf(a).length < seriesOf(b).length ? a : b);
+    const refArr = seriesOf(refSeries);
+    const maxStart = refArr.length - totalNeeded;
     const startIdx = Math.floor(Math.random() * (maxStart + 1));
-    const refSeries = history.reduce((a, b) => series(a).length < series(b).length ? a : b);
-    const refArr = series(refSeries);
+
     const ticks = [];
-    for (let i = 0; i < ticksNeeded; i++) {
+    for (let i = 0; i < totalNeeded; i++) {
       const idx = startIdx + i;
       const refDate = refArr[idx].date;
       const prices = {};
-      for (const s of history) {
-        const arr = series(s);
+      for (const s of universe) {
+        const arr = seriesOf(s);
         let nearest = null;
         for (let j = arr.length - 1; j >= 0; j--) {
           if (arr[j].date <= refDate) { nearest = arr[j]; break; }
@@ -70,7 +78,7 @@
       }
       ticks.push({ date: refDate, prices });
     }
-    return ticks;
+    return { ticks, universeSymbols: universe.map((s) => s.symbol), prerollLen: PREROLL };
   }
 
   function computeValue(game) {
@@ -201,20 +209,25 @@
     return Math.max(MIN_STARTING_CASH, Math.min(MAX_STARTING_CASH, Math.round(n)));
   }
 
-  PaperTraderApp.prototype.clearTimer = function () {
-    if (this.timer) { clearInterval(this.timer); this.timer = null; }
-  };
-
   PaperTraderApp.prototype.startRun = function (mode) {
     this.clearTimer();
-    const ticks = sliceRun(mode);
+    let sliced;
+    try {
+      sliced = sliceRun(mode);
+    } catch (err) {
+      console.error('PaperTrader:', err);
+      alert("Couldn't start this run — " + (err && err.message ? err.message : 'unknown error') + '. Try a different mode.');
+      return;
+    }
     const startingCash = clampBalance(this.startingBalance);
     this.startingBalance = startingCash;
     writeSavedBalance(startingCash);
     this.game = {
       mode,
-      ticks,
-      currentTick: 0,
+      ticks: sliced.ticks,
+      universeSymbols: sliced.universeSymbols,
+      prerollLen: sliced.prerollLen,
+      currentTick: sliced.prerollLen,
       isPaused: false,
       startingCash,
       cash: startingCash,
@@ -229,20 +242,37 @@
     this.startTimer();
   };
 
+  PaperTraderApp.prototype.advanceTick = function () {
+    const g = this.game;
+    if (!g) return;
+    if (g.isPaused) return;
+    if (g.currentTick >= g.ticks.length - 1) return this.endRun();
+    g.currentTick += 1;
+    const v = computeValue(g);
+    g.history.push(v);
+    if (v > g.maxValue) g.maxValue = v;
+    const dd = g.maxValue > 0 ? (g.maxValue - v) / g.maxValue : 0;
+    if (dd > g.maxDrawdown) g.maxDrawdown = dd;
+    this.updateGameDOM();
+  };
+
   PaperTraderApp.prototype.startTimer = function () {
     this.clearTimer();
     const tickMs = MODES[this.game.mode].tickMs;
-    this.timer = setInterval(() => {
-      if (!this.game || this.game.isPaused) return;
-      if (this.game.currentTick >= this.game.ticks.length - 1) return this.endRun();
-      this.game.currentTick += 1;
-      const v = computeValue(this.game);
-      this.game.history.push(v);
-      if (v > this.game.maxValue) this.game.maxValue = v;
-      const dd = this.game.maxValue > 0 ? (this.game.maxValue - v) / this.game.maxValue : 0;
-      if (dd > this.game.maxDrawdown) this.game.maxDrawdown = dd;
-      this.updateGameDOM();
-    }, tickMs);
+    // First tick fires fast so the player sees motion immediately,
+    // then we settle into the mode's normal cadence.
+    this.timer = setTimeout(() => {
+      this.advanceTick();
+      this.timer = setInterval(() => this.advanceTick(), tickMs);
+    }, FIRST_TICK_DELAY);
+  };
+
+  PaperTraderApp.prototype.clearTimer = function () {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   };
 
   PaperTraderApp.prototype.pauseToggle = function () {
@@ -283,18 +313,19 @@
     this.clearTimer();
     if (!this.game) return;
     const g = this.game;
-    const first = g.ticks[0].prices;
+    // Baselines should be computed over the player's window only — exclude preroll context ticks.
+    const gameStart = g.ticks[g.prerollLen].prices;
     const last = g.ticks[g.ticks.length - 1].prices;
     let final = g.cash;
     for (const t in g.holdings) final += (last[t] || 0) * g.holdings[t].shares;
     const finalReturn = (final - g.startingCash) / g.startingCash;
-    const vtiStart = first['VTI'];
+    const vtiStart = gameStart['VTI'];
     const vtiEnd = last['VTI'];
     const vtiReturn = vtiStart > 0 ? (vtiEnd - vtiStart) / vtiStart : 0;
-    const vtiSeries = g.ticks.map(t => (t.prices['VTI'] / vtiStart) * g.startingCash);
+    const vtiSeries = g.ticks.slice(g.prerollLen).map(t => (t.prices['VTI'] / vtiStart) * g.startingCash);
     let bestSym = 'VTI', bestRet = -Infinity;
-    for (const sym in first) {
-      const s = first[sym], e = last[sym];
+    for (const sym in gameStart) {
+      const s = gameStart[sym], e = last[sym];
       if (!s || !e) continue;
       const r = (e - s) / s;
       if (r > bestRet) { bestRet = r; bestSym = sym; }
@@ -310,7 +341,7 @@
 
     const summary = {
       mode: g.mode,
-      startDate: g.ticks[0].date,
+      startDate: g.ticks[g.prerollLen].date,
       endDate: g.ticks[g.ticks.length - 1].date,
       startingCash: g.startingCash,
       finalValue: final,
@@ -463,9 +494,11 @@
     if (!g) return;
     const meta = MODES[g.mode];
     const value = computeValue(g);
-    const change = (value - STARTING_CASH) / STARTING_CASH;
+    const change = (value - g.startingCash) / g.startingCash;
     const tick = g.ticks[g.currentTick];
-    const pct = (g.currentTick) / (g.ticks.length - 1);
+    const gameTickIdx = g.currentTick - g.prerollLen;     // 0-based within the playable window
+    const gameTickCount = g.ticks.length - g.prerollLen;
+    const pct = gameTickIdx / Math.max(1, gameTickCount - 1);
 
     let content = this.root.querySelector('#pt-game-content');
     if (!content || fullRender) {
@@ -480,7 +513,7 @@
       h('button', { class: 'pt-icon-btn', onclick: () => this.abandon() }, '×'),
       h('div', { class: 'pt-game-center' }, [
         h('div', { class: 'pt-eyebrow' }, meta.label + ' • ' + tick.date),
-        h('div', { class: 'pt-caption' }, 'tick ' + (g.currentTick + 1) + ' / ' + g.ticks.length),
+        h('div', { class: 'pt-caption' }, 'tick ' + (gameTickIdx + 1) + ' / ' + gameTickCount),
       ]),
       h('button', { class: 'pt-icon-btn pt-icon-btn--ink', onclick: () => this.pauseToggle() }, g.isPaused ? '▶' : '❚❚'),
     ]);
@@ -493,7 +526,7 @@
 
     // Hero card
     const chartW = Math.min(content.clientWidth || 460, 480) - 48;
-    const portfolioMarkup = portfolioSvg(g.history, chartW > 0 ? chartW : 320, 120);
+    const portfolioMarkup = portfolioSvg(g.history.length > 1 ? g.history : [g.startingCash, g.startingCash], chartW > 0 ? chartW : 320, 120);
     const hero = h('div', { class: 'pt-card pt-hero' });
     hero.innerHTML =
       '<div class="pt-label">portfolio value</div>' +
@@ -508,10 +541,11 @@
       '</div>';
     content.appendChild(hero);
 
-    // Asset list
+    // Asset list — only iterate over assets this run actually includes
     content.appendChild(h('div', { class: 'pt-label', style: { marginLeft: '4px', marginTop: '24px' } }, 'tap to trade'));
     const list = h('div', { class: 'pt-asset-list' });
-    this.universeMeta.forEach((u) => {
+    const activeUniverse = this.universeMeta.filter((u) => g.universeSymbols.indexOf(u.symbol) !== -1);
+    activeUniverse.forEach((u) => {
       const series = [];
       const len = Math.min(6, g.currentTick + 1);
       for (let i = Math.max(0, g.currentTick - len + 1); i <= g.currentTick; i++) {
