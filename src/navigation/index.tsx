@@ -17,6 +17,7 @@ import BuddyScreen from '../screens/BuddyScreen';
 import QuestDetailScreen from '../screens/QuestDetailScreen';
 import NegotiationScreen from '../screens/NegotiationScreen';
 import FutureSelfScreen from '../screens/FutureSelfScreen';
+import SwipeGameScreen from '../screens/SwipeGameScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   QuestDetail: { questId: string };
   Negotiation: { questId: string };
   FutureSelf: undefined;
+  SwipeGame: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -82,6 +84,7 @@ export function Navigation() {
         <Stack.Screen name="QuestDetail" component={QuestDetailScreen} options={{ presentation: 'modal' }} />
         <Stack.Screen name="Negotiation" component={NegotiationScreen} options={{ presentation: 'modal' }} />
         <Stack.Screen name="FutureSelf" component={FutureSelfScreen} options={{ presentation: 'modal' }} />
+        <Stack.Screen name="SwipeGame" component={SwipeGameScreen} options={{ presentation: 'modal' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

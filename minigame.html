@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swipe to Buy - Minigame</title>
+    <style>
+        :root {
+            --color1: #CDB4DB; /* Lavender */
+            --color2: #FFC8DD; /* Pale Pink */
+            --color3: #FFAFCC; /* Hot Pink (Skip) */
+            --color4: #BDE0FE; /* Sky Blue */
+            --color5: #A2D2FF; /* Bright Blue (Buy) */
+
+            --cream: #FCF9FF;
+            --ink: #2D2335;
+            --ink-soft: #5E5466;
+            --ink-muted: #8E8499;
+            --white: #FFFFFF;
+            
+            --lavender-deep: var(--color1);
+            --mint-deep: var(--color5);
+            --rose-deep: var(--color3);
+            --glass: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --shadow: rgba(205, 180, 219, 0.2);
+            
+            --radius-md: 18px;
+            --radius-xl: 32px;
+            --radius-pill: 999px;
+            
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--cream);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--ink);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .flash-side {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.25s ease-out, background-color 0.25s ease-out;
+            opacity: 0;
+        }
+        #flash-left { left: 0; }
+        #flash-right { right: 0; }
+
+        #app-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--color2) 0%, var(--color4) 100%);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            position: relative;
+            padding: var(--spacing-xl);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 12px 32px var(--shadow);
+            padding: var(--spacing-xl);
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        #screen-input {
+            justify-content: center;
+            text-align: center;
+        }
+
+        h1 { font-size: 30px; letter-spacing: -0.6px; margin-bottom: 8px; color: var(--ink); }
+        p { color: var(--ink-soft); line-height: 1.4; margin-bottom: 24px; }
+
+        .budget-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 3px solid var(--color1);
+            padding-bottom: 8px;
+            width: 100%;
+        }
+
+        .currency { font-size: 40px; color: var(--color1); font-weight: 700; }
+        input {
+            background: transparent;
+            border: none;
+            font-size: 44px;
+            font-weight: 800;
+            color: var(--ink);
+            width: 180px;
+            text-align: center;
+            outline: none;
+        }
+
+        .max-hint { font-size: 11px; font-weight: 700; color: var(--ink-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .history-box {
+            background: rgba(255,255,255,0.4);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+            border: 1px dashed var(--color1);
+        }
+        .history-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--color1); margin-bottom: 8px; }
+        .history-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; }
+        .history-row b { color: var(--ink); }
+
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+
+        .btn {
+            background: var(--color1);
+            color: var(--white);
+            border: none;
+            padding: 18px;
+            border-radius: var(--radius-pill);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--color1);
+            border: 2px solid var(--color1);
+        }
+
+        .btn:active { transform: scale(0.96); box-shadow: 0 2px 6px var(--shadow); }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        .stat-item span { display: block; }
+        .stat-label { font-size: 11px; font-weight: 800; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--ink); }
+
+        .card-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            height: 400px;
+        }
+
+        .purchase-card {
+            position: absolute;
+            width: 100%;
+            height: 380px;
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 12px 40px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transform-origin: center bottom;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            border: 1px solid var(--color2);
+        }
+
+        .purchase-card .emoji { font-size: 84px; margin-bottom: 24px; filter: drop-shadow(0 4px 8px var(--shadow)); }
+        .purchase-card .title { font-size: 26px; font-weight: 800; text-align: center; color: var(--ink); }
+        .purchase-card .price { font-size: 42px; color: var(--color1); font-weight: 800; margin-top: 12px; }
+
+        .overlay-label {
+            position: absolute;
+            top: 20px;
+            padding: 10px 20px;
+            border: 3px solid;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 28px;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .overlay-buy { left: 24px; color: var(--color5); border-color: var(--color5); transform: rotate(-15deg); }
+        .overlay-skip { right: 24px; color: var(--color3); border-color: var(--color3); transform: rotate(15deg); }
+
+        .swipe-hint {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--ink);
+            margin-top: 32px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        #modal-summary {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(45, 35, 53, 0.6);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: var(--spacing-xl);
+        }
+
+        .summary-card {
+            background: var(--white);
+            width: 100%;
+            max-width: 360px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-xl);
+            padding: 36px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+            border: 2px solid var(--color1);
+        }
+
+        .summary-title { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 28px; color: var(--ink); }
+        .summary-row { font-size: 17px; color: var(--ink-soft); margin-bottom: 10px; }
+        .summary-row b { color: var(--ink); font-weight: 800; }
+        .divider { height: 2px; background: var(--color4); opacity: 0.3; margin: 24px 0; }
+        
+        .ai-feedback {
+            background: var(--color4);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-top: 24px;
+            border-left: 5px solid var(--color1);
+        }
+        .ai-feedback h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; color: var(--color1); font-weight: 800; }
+        .ai-feedback p { font-size: 15px; color: var(--ink); line-height: 1.6; margin-bottom: 0; font-weight: 500; }
+
+    </style>
+</head>
+<body>
+
+<div id="app-bg"></div>
+<div id="flash-left" class="flash-side"></div>
+<div id="flash-right" class="flash-side"></div>
+
+<div id="app">
+    <!-- Input Screen -->
+    <div id="screen-input" class="screen active">
+        <div class="glass-card">
+            <h1>Financial Swipe</h1>
+            <p>Set your budget for this round.</p>
+            
+            <div id="history-container" style="display: none;">
+                <div class="history-box">
+                    <h3>Last Session</h3>
+                    <div class="history-row"><span>Starting Budget:</span> <b id="hist-budget">$0</b></div>
+                    <div class="history-row"><span>Total Spent:</span> <b id="hist-spent">$0</b></div>
+                    <div class="history-row"><span>Remaining:</span> <b id="hist-left">$0</b></div>
+                </div>
+            </div>
+
+            <div class="budget-input-container">
+                <div class="input-row">
+                    <span class="currency">$</span>
+                    <input type="number" id="budget-value" value="2500" max="10000">
+                </div>
+                <span class="max-hint">Maximum $10,000</span>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" id="btn-start" onclick="startGame(false)">Start Simulation</button>
+                <button class="btn btn-secondary" id="btn-continue" style="display: none;" onclick="startGame(true)">Continue Last Budget</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+        <div class="stats-header">
+            <div class="stat-item">
+                <span class="stat-label">Budget Left</span>
+                <span id="stat-budget-left" class="stat-value">$2500</span>
+            </div>
+            <div class="stat-item" style="text-align: right;">
+                <span class="stat-label">Progress</span>
+                <span id="stat-count" class="stat-value">0/10</span>
+            </div>
+        </div>
+
+        <div class="card-container" id="card-stack"></div>
+        <div class="swipe-hint">← Swipe LEFT to BUY | Swipe RIGHT to SKIP →</div>
+    </div>
+
+    <!-- Summary Modal -->
+    <div id="modal-summary">
+        <div class="summary-card">
+            <div class="summary-title">Round Complete!</div>
+            <div id="summary-content"></div>
+            
+            <div class="ai-feedback" id="spending-feedback">
+                <h3>Coach Insights</h3>
+                <p id="feedback-text"></p>
+            </div>
+
+            <div class="btn-group" style="margin-top: 28px;">
+                <button class="btn" onclick="restartGame(false)">New Game (Fresh Start)</button>
+                <button class="btn btn-secondary" onclick="restartGame(true)">Keep Playing</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PURCHASE_CARDS = [
+        { title: 'Sephora Haul', price: 67, type: 'want', emoji: '💄' },
+        { title: 'Quick Lunch', price: 12, type: 'need', emoji: '🥪' },
+        { title: 'Coachella Ticket', price: 1200, type: 'want', emoji: '🎡' },
+        { title: 'Phone Bill', price: 55, type: 'need', emoji: '📱' },
+        { title: 'Matching Sweatset', price: 85, type: 'want', emoji: '🧶' },
+        { title: 'Gas for Car', price: 40, type: 'need', emoji: '⛽' },
+        { title: 'Concert Merch', price: 45, type: 'want', emoji: '👕' },
+        { title: 'Rent Payment', price: 1400, type: 'need', emoji: '🏠' },
+        { title: 'Late Night Uber', price: 24, type: 'want', emoji: '🚗' },
+        { title: 'Weekly Groceries', price: 95, type: 'need', emoji: '🛒' },
+        { title: 'Spotify Premium', price: 11, type: 'want', emoji: '🎵' },
+        { title: 'Electric Bill', price: 120, type: 'need', emoji: '⚡' },
+        { title: 'New Sneakers', price: 110, type: 'want', emoji: '👟' },
+        { title: 'Gym Membership', price: 45, type: 'need', emoji: '💪' },
+        { title: 'Coffee Run', price: 7, type: 'want', emoji: '☕' },
+        { title: 'Car Insurance', price: 150, type: 'need', emoji: '🛡️' },
+        { title: 'Movie Night', price: 35, type: 'want', emoji: '🍿' },
+        { title: 'Water Bill', price: 30, type: 'need', emoji: '🚰' },
+        { title: 'Skincare Bundle', price: 95, type: 'want', emoji: '🧴' },
+        { title: 'Vitamins', price: 25, type: 'need', emoji: '💊' },
+        { title: 'Designer Purse', price: 850, type: 'want', emoji: '👜' },
+        { title: 'Internet Bill', price: 70, type: 'need', emoji: '🌐' },
+        { title: 'Dinner at Nobu', price: 250, type: 'want', emoji: '🍱' },
+        { title: 'MacBook Pro', price: 2000, type: 'want', emoji: '💻' },
+        { title: 'Student Loan', price: 300, type: 'need', emoji: '🎓' },
+        { title: 'Grocery Club', price: 10, type: 'need', emoji: '💳' },
+        { title: 'Designer Shades', price: 350, type: 'want', emoji: '🕶️' },
+        { title: 'Health Insurance', price: 250, type: 'need', emoji: '🏥' },
+        { title: 'Vegas Weekend', price: 800, type: 'want', emoji: '🎲' },
+        { title: 'Haircut & Style', price: 120, type: 'want', emoji: '💇' },
+        { title: 'Dog Food', price: 60, type: 'need', emoji: '🐕' },
+        { title: 'Vet Visit', price: 150, type: 'need', emoji: '🩺' },
+        { title: 'Monthly Bus Pass', price: 80, type: 'need', emoji: '🚌' },
+        { title: 'Arcade Night', price: 40, type: 'want', emoji: '🕹️' },
+        { title: 'Vinyl Record', price: 50, type: 'want', emoji: '📻' },
+        { title: 'House Plant', price: 25, type: 'want', emoji: '🌿' },
+        { title: 'Car Repairs', price: 450, type: 'need', emoji: '🔧' },
+        { title: 'Laundry Soap', price: 15, type: 'need', emoji: '🧼' },
+        { title: 'Oral Care Kit', price: 20, type: 'need', emoji: '🪥' },
+        { title: 'Fancy Cocktail', price: 18, type: 'want', emoji: '🍸' },
+        { title: 'Subscription Box', price: 45, type: 'want', emoji: '📦' },
+        { title: 'Parking Ticket', price: 75, type: 'need', emoji: '🎫' },
+    ];
+
+    let initialBudget = 2500;
+    let currentRemaining = 2500;
+    let currentCards = [];
+    let purchased = [];
+    let swipedCount = 0;
+    const flashLeft = document.getElementById('flash-left');
+    const flashRight = document.getElementById('flash-right');
+
+    // Load history on startup
+    window.onload = () => {
+        const saved = localStorage.getItem('swipe_budget_history');
+        if (saved) {
+            const hist = JSON.parse(saved);
+            document.getElementById('history-container').style.display = 'block';
+            document.getElementById('btn-continue').style.display = 'block';
+            document.getElementById('hist-budget').innerText = `$${hist.initial}`;
+            document.getElementById('hist-spent').innerText = `$${hist.spent}`;
+            document.getElementById('hist-left').innerText = `$${hist.remaining}`;
+            document.getElementById('budget-value').value = hist.initial;
+            currentRemaining = hist.remaining;
+        }
+    };
+
+    function startGame(keepPrevious) {
+        let budgetInput = document.getElementById('budget-value');
+        let val = parseInt(budgetInput.value) || 2500;
+        if (val > 10000) val = 10000;
+        
+        if (!keepPrevious) {
+            initialBudget = val;
+            currentRemaining = val;
+        } else {
+            // If continuing, we use the saved remaining balance
+            const saved = JSON.parse(localStorage.getItem('swipe_budget_history'));
+            initialBudget = saved.initial;
+            currentRemaining = saved.remaining;
+        }
+        
+        const shuffled = [...PURCHASE_CARDS].sort(() => 0.5 - Math.random());
+        currentCards = shuffled.slice(0, 10);
+        purchased = [];
+        swipedCount = 0;
+
+        document.getElementById('screen-input').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+        renderStack();
+        updateStats();
+    }
+
+    function updateStats() {
+        const roundSpent = purchased.reduce((s, c) => s + c.price, 0);
+        document.getElementById('stat-budget-left').innerText = `$${currentRemaining - roundSpent}`;
+        document.getElementById('stat-count').innerText = `${swipedCount}/10`;
+    }
+
+    function renderStack() {
+        const container = document.getElementById('card-stack');
+        container.innerHTML = '';
+        currentCards.forEach((card, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'purchase-card';
+            cardEl.style.zIndex = currentCards.length - index;
+            cardEl.innerHTML = `
+                <div class="overlay-label overlay-buy">BUY</div>
+                <div class="overlay-label overlay-skip">SKIP</div>
+                <div class="emoji">${card.emoji}</div>
+                <div class="title">${card.title}</div>
+                <div class="price">$${card.price}</div>
+            `;
+            initSwipe(cardEl, index);
+            container.appendChild(cardEl);
+        });
+    }
+
+    function initSwipe(el, index) {
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        const handleStart = (e) => {
+            startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            isDragging = true;
+            el.style.transition = 'none';
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            currentX = x - startX;
+            const intensity = Math.min(Math.abs(currentX) / 150, 1);
+            el.style.transform = `translateX(${currentX}px) rotate(${currentX / 20}deg)`;
+            
+            const buyLabel = el.querySelector('.overlay-buy');
+            const skipLabel = el.querySelector('.overlay-skip');
+            
+            if (currentX < 0) {
+                buyLabel.style.opacity = intensity;
+                skipLabel.style.opacity = 0;
+                flashLeft.style.backgroundColor = `var(--color5)`;
+                flashLeft.style.opacity = intensity * 0.5;
+                flashRight.style.opacity = 0;
+            } else {
+                skipLabel.style.opacity = intensity;
+                buyLabel.style.opacity = 0;
+                flashRight.style.backgroundColor = `var(--color3)`;
+                flashRight.style.opacity = intensity * 0.5;
+                flashLeft.style.opacity = 0;
+            }
+        };
+
+        const handleEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            if (Math.abs(currentX) > 120) {
+                const direction = currentX < 0 ? -1 : 1;
+                el.style.transform = `translateX(${direction * 600}px) rotate(${direction * 30}deg)`;
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    flashLeft.style.opacity = 0;
+                    flashRight.style.opacity = 0;
+                    handleSwipeResult(direction === -1, index);
+                    el.remove();
+                }, 300);
+            } else {
+                el.style.transform = '';
+                el.querySelector('.overlay-buy').style.opacity = 0;
+                el.querySelector('.overlay-skip').style.opacity = 0;
+                flashLeft.style.opacity = 0;
+                flashRight.style.opacity = 0;
+            }
+        };
+
+        el.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+        el.addEventListener('touchstart', handleStart);
+        window.addEventListener('touchmove', handleMove);
+        window.addEventListener('touchend', handleEnd);
+    }
+
+    function handleSwipeResult(bought, index) {
+        if (bought) purchased.push(currentCards[index]);
+        swipedCount++;
+        updateStats();
+        if (swipedCount >= 10) setTimeout(showSummary, 500);
+    }
+
+    function showSummary() {
+        const roundSpent = purchased.reduce((s, c) => s + c.price, 0);
+        const finalRemaining = currentRemaining - roundSpent;
+        const totalSpentAllRounds = (initialBudget - currentRemaining) + roundSpent;
+
+        // Save progress
+        localStorage.setItem('swipe_budget_history', JSON.stringify({
+            initial: initialBudget,
+            remaining: finalRemaining,
+            spent: totalSpentAllRounds
+        }));
+
+        const wants = purchased.filter(c => c.type === 'want').length;
+        const needsCount = purchased.filter(c => c.type === 'need').length;
+
+        document.getElementById('summary-content').innerHTML = `
+            <div class="summary-row">Round Items: <b>${purchased.length} bought</b></div>
+            <div class="summary-row">Wants: <b>${wants}</b> | Needs: <b>${needsCount}</b></div>
+            <div class="divider"></div>
+            <div class="summary-row">Total Spent: <b>$${roundSpent}</b></div>
+            <div class="summary-row">Budget Left: <b style="color: ${finalRemaining < 800 ? 'var(--color3)' : 'var(--ink)'}">$${finalRemaining}</b></div>
+        `;
+
+        document.getElementById('feedback-text').innerText = generateFeedback(purchased, finalRemaining);
+        document.getElementById('modal-summary').style.display = 'flex';
+    }
+
+    function generateFeedback(purchased, remaining) {
+        const wants = purchased.filter(c => c.type === 'want').length;
+        const skippedNeeds = currentCards.filter(c => c.type === 'need' && !purchased.includes(c)).length;
+
+        if (remaining < 0) return "Budget bust! You're in debt. New Game recommended to reset your strategy.";
+        if (remaining < 800) return "Danger Zone! You've got very little left for essentials. Try to be stricter in the next round.";
+        if (skippedNeeds > 0) return "Warning: You skipped essential needs to buy wants. That's a high-risk habit!";
+        if (wants > 5) return "Spending spree! You bought a lot of luxuries. Try to cut back on 'wants' next time.";
+        return "Excellent control! You balanced your needs and kept a healthy cushion.";
+    }
+
+    function restartGame(keepPlaying) {
+        if (!keepPlaying) localStorage.removeItem('swipe_budget_history');
+        location.reload(); // Quickest way to reset state and refresh history UI
+    }
+</script>
+
+</body>
+</html>

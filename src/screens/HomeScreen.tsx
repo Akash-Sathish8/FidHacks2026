@@ -98,6 +98,21 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
 
+        <Animated.View entering={FadeInUp.duration(500).delay(250)}>
+          <Pressable onPress={() => navigation.navigate('SwipeGame')}>
+            <GlassCard>
+              <View style={styles.minigameRow}>
+                <View style={styles.minigameText}>
+                  <Text style={styles.label}>Minigame</Text>
+                  <Text style={styles.h2}>Swipe to Buy</Text>
+                  <Text style={styles.sub}>Can you stick to your budget?</Text>
+                </View>
+                <Text style={styles.minigameEmoji}>🃏</Text>
+              </View>
+            </GlassCard>
+          </Pressable>
+        </Animated.View>
+
         <Animated.View entering={FadeInUp.duration(500).delay(280)} style={styles.shortcutRow}>
           <Pressable style={styles.shortcut} onPress={() => navigation.navigate('FutureSelf')}>
             <Text style={styles.shortcutEmoji}>🔮</Text>
@@ -145,6 +160,9 @@ const styles = StyleSheet.create({
   heroInfo: { flex: 1 },
   buddyName: { ...typography.h2, color: palette.ink },
   buddyLevel: { ...typography.caption, color: palette.inkSoft, marginTop: 4, letterSpacing: 0.2 },
+  minigameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  minigameText: { flex: 1, gap: 4 },
+  minigameEmoji: { fontSize: 40 },
   xpLabel: { ...typography.caption, color: palette.inkMuted, marginTop: 6 },
   weekRow: { flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
   dayChip: {
