@@ -3,25 +3,157 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Paper Trader Demo</title>
+  <title>Money Moves — Minigames</title>
   <link rel="stylesheet" href="trader.css" />
-  <style>
-    html, body { margin: 0; padding: 0; min-height: 100%; background: #FDFBF7; }
-    #app-host { min-height: 100vh; }
-  </style>
+  <link rel="stylesheet" href="hub.css" />
 </head>
 <body>
-  <div id="app-host"></div>
+  <!-- HUB -->
+  <main id="hub" class="hub-root">
+    <div class="hub-bg-blob hub-bg-blob--a"></div>
+    <div class="hub-bg-blob hub-bg-blob--b"></div>
+    <div class="hub-bg-blob hub-bg-blob--c"></div>
+
+    <div class="hub-content">
+      <header class="hub-header">
+        <p class="hub-eyebrow">Money Moves</p>
+        <h1 class="hub-display">Minigames</h1>
+        <p class="hub-sub">Three quick ways to practice your first money moves.</p>
+      </header>
+
+      <section class="hub-grid">
+        <!-- 1. SwipeSmart -->
+        <button class="hub-card hub-card--swipe" data-game="swipe" type="button">
+          <div class="hub-card-glyph hub-card-glyph--swipe" aria-hidden="true">
+            <span class="hub-swipe-card hub-swipe-card--back"></span>
+            <span class="hub-swipe-card hub-swipe-card--mid"></span>
+            <span class="hub-swipe-card hub-swipe-card--front">$</span>
+          </div>
+          <div class="hub-card-body">
+            <p class="hub-card-tag">Spending reflex</p>
+            <h2 class="hub-card-title">SwipeSmart</h2>
+            <p class="hub-card-desc">Swipe right to buy, left to skip. Build instinct for needs vs wants.</p>
+          </div>
+          <span class="hub-card-cta">Coming soon</span>
+        </button>
+
+        <!-- 2. MoneyMoves -->
+        <button class="hub-card hub-card--moves" data-game="moves" type="button">
+          <div class="hub-card-glyph hub-card-glyph--moves" aria-hidden="true">
+            <span class="hub-moves-dot hub-moves-dot--1"></span>
+            <span class="hub-moves-dot hub-moves-dot--2"></span>
+            <span class="hub-moves-dot hub-moves-dot--3"></span>
+            <span class="hub-moves-dot hub-moves-dot--4"></span>
+            <svg viewBox="0 0 80 80" class="hub-moves-line">
+              <path d="M10,60 Q25,15 40,45 T70,20" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="hub-card-body">
+            <p class="hub-card-tag">Life decisions</p>
+            <h2 class="hub-card-title">MoneyMoves</h2>
+            <p class="hub-card-desc">Branching scenarios. Pick your path, watch the future compound.</p>
+          </div>
+          <span class="hub-card-cta">Coming soon</span>
+        </button>
+
+        <!-- 3. Market Games -->
+        <button class="hub-card hub-card--market hub-card--ready" data-game="market" type="button">
+          <div class="hub-card-glyph hub-card-glyph--market" aria-hidden="true">
+            <svg viewBox="0 0 120 60" class="hub-market-chart">
+              <defs>
+                <linearGradient id="hub-market-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6FE3B3" stop-opacity="0.6" />
+                  <stop offset="100%" stop-color="#6FE3B3" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,45 L15,38 L25,42 L40,22 L55,30 L70,14 L90,22 L105,8 L120,12 L120,60 L0,60 Z" fill="url(#hub-market-grad)" />
+              <path d="M0,45 L15,38 L25,42 L40,22 L55,30 L70,14 L90,22 L105,8 L120,12" stroke="#1A9F7A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="hub-card-body">
+            <p class="hub-card-tag">Investing</p>
+            <h2 class="hub-card-title">Market Games</h2>
+            <p class="hub-card-desc">Rewind real market history. Compress months into seconds. Beat the benchmark.</p>
+          </div>
+          <span class="hub-card-cta hub-card-cta--ready">Play now &rarr;</span>
+        </button>
+      </section>
+
+      <footer class="hub-footer">
+        <p>FidHacks 2026 &middot; akakash.sathish@gmail.com</p>
+      </footer>
+    </div>
+  </main>
+
+  <!-- GAME HOST (hidden until Market Games is launched) -->
+  <section id="game-host" class="game-host" hidden>
+    <button id="back-btn" class="game-back" type="button" aria-label="Back to minigames">
+      <span aria-hidden="true">&larr;</span> Minigames
+    </button>
+    <div id="trader-mount" class="game-mount"></div>
+  </section>
+
+  <!-- "Coming soon" toast -->
+  <div id="toast" class="hub-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="data.js"></script>
   <script src="trader.js"></script>
   <script>
-    PaperTrader.mount('#app-host', {
-      onComplete: (summary) => {
-        console.log('Run finished:', summary);
-        // Your host app: dispatch coins/XP, save to backend, etc.
-      },
-    });
+    (function () {
+      const hub = document.getElementById('hub');
+      const gameHost = document.getElementById('game-host');
+      const backBtn = document.getElementById('back-btn');
+      const toast = document.getElementById('toast');
+      const mount = document.getElementById('trader-mount');
+      let traderMounted = false;
+      let toastTimer = null;
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.hidden = false;
+        toast.classList.add('hub-toast--show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('hub-toast--show');
+          setTimeout(() => { toast.hidden = true; }, 240);
+        }, 1800);
+      }
+
+      function launchMarket() {
+        hub.hidden = true;
+        gameHost.hidden = false;
+        if (!traderMounted) {
+          PaperTrader.mount('#trader-mount', {
+            onComplete: (summary) => {
+              console.log('Run finished:', summary);
+            },
+          });
+          traderMounted = true;
+        }
+        window.scrollTo(0, 0);
+      }
+
+      function backToHub() {
+        gameHost.hidden = true;
+        hub.hidden = false;
+        window.scrollTo(0, 0);
+      }
+
+      document.querySelectorAll('.hub-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          const game = card.getAttribute('data-game');
+          if (game === 'market') {
+            launchMarket();
+          } else if (game === 'swipe') {
+            showToast('SwipeSmart is coming soon — stay tuned.');
+          } else if (game === 'moves') {
+            showToast('MoneyMoves is coming soon — stay tuned.');
+          }
+        });
+      });
+
+      backBtn.addEventListener('click', backToHub);
+    })();
   </script>
 </body>
 </html>

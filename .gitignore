@@ -41,3 +41,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Xcode build artifacts for native MoneyMoves SwiftUI project
+MoneyMoves/build/
+MoneyMoves/**/.DS_Store
+MoneyMoves/**/xcuserdata/
+MoneyMoves/**/*.xcuserstate
+*.xcuserstate

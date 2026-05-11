@@ -20,6 +20,7 @@ import FutureSelfScreen from '../screens/FutureSelfScreen';
 import TradeScreen from '../screens/TradeScreen';
 import TradeGameScreen from '../screens/TradeGameScreen';
 import TradeResultScreen from '../screens/TradeResultScreen';
+import MinigamesScreen from '../screens/MinigamesScreen';
 import type { RunSummary } from '../state/TradeState';
 
 export type RootStackParamList = {
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   QuestDetail: { questId: string };
   Negotiation: { questId: string };
   FutureSelf: undefined;
+  Trade: undefined;
   TradeGame: undefined;
   TradeResult: { summary: RunSummary };
 };
@@ -40,7 +42,7 @@ const Tab = createBottomTabNavigator();
 const TAB_META: Record<string, { label: string; emoji: string }> = {
   Home: { label: 'Home', emoji: '✦' },
   Quests: { label: 'Quests', emoji: '✧' },
-  Trade: { label: 'Trade', emoji: '◈' },
+  Play: { label: 'Play', emoji: '◈' },
   Money: { label: 'Money', emoji: '◐' },
   Squad: { label: 'Squad', emoji: '◇' },
   Buddy: { label: 'Buddy', emoji: '❀' },
@@ -71,7 +73,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Quests" component={QuestsScreen} />
-      <Tab.Screen name="Trade" component={TradeScreen} />
+      <Tab.Screen name="Play" component={MinigamesScreen} />
       <Tab.Screen name="Money" component={MoneyScreen} />
       <Tab.Screen name="Squad" component={SquadScreen} />
       <Tab.Screen name="Buddy" component={BuddyScreen} />
@@ -90,6 +92,7 @@ export function Navigation() {
         <Stack.Screen name="QuestDetail" component={QuestDetailScreen} options={{ presentation: 'modal' }} />
         <Stack.Screen name="Negotiation" component={NegotiationScreen} options={{ presentation: 'modal' }} />
         <Stack.Screen name="FutureSelf" component={FutureSelfScreen} options={{ presentation: 'modal' }} />
+        <Stack.Screen name="Trade" component={TradeScreen} options={{ presentation: 'modal' }} />
         <Stack.Screen name="TradeGame" component={TradeGameScreen} options={{ presentation: 'modal', gestureEnabled: false }} />
         <Stack.Screen name="TradeResult" component={TradeResultScreen} options={{ presentation: 'modal' }} />
       </Stack.Navigator>
