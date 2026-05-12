@@ -7,15 +7,6 @@ struct BuddyChatButton: View {
     @State private var showChat: Bool = false
     @State private var pulseScale: CGFloat = 1
 
-    private var buddyEmoji: String {
-        switch app.user.buddyId {
-        case "fox":   return "🦊"
-        case "otter": return "🦦"
-        case "cat":   return "🐱"
-        default:      return "✨"
-        }
-    }
-
     var body: some View {
         Button { showChat = true } label: {
             ZStack {
@@ -30,7 +21,10 @@ struct BuddyChatButton: View {
                     .overlay(Circle().stroke(Palette.glassBorder, lineWidth: 1))
                     .frame(width: 52, height: 52)
                     .shadow(color: Palette.lavenderDeep.opacity(0.3), radius: 14, x: 0, y: 6)
-                Text(buddyEmoji).font(.system(size: 30))
+                Image("Bunny_Plain")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 44, height: 44)
             }
         }
         .buttonStyle(.plain)
@@ -65,22 +59,10 @@ struct BuddyChatView: View {
     @State private var thinking: Bool = false
     @FocusState private var inputFocused: Bool
 
-    private var buddyEmoji: String {
-        switch app.user.buddyId {
-        case "fox":   return "🦊"
-        case "otter": return "🦦"
-        case "cat":   return "🐱"
-        default:      return "✨"
-        }
-    }
-    private var buddyName: String {
-        switch app.user.buddyId {
-        case "fox":   return "Fox"
-        case "otter": return "Otter"
-        case "cat":   return "Cat"
-        default:      return "Buddy"
-        }
-    }
+    // The chatbot mascot is always the bunny, regardless of which buddy
+    // the user picked in onboarding.
+    private let bunnyAvatar: String = "Bunny_Plain"
+    private let buddyName: String = "Bunny"
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -114,7 +96,7 @@ struct BuddyChatView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle().fill(Gradients.hero).frame(width: 44, height: 44)
-                Text(buddyEmoji).font(.system(size: 24))
+                Image(bunnyAvatar).resizable().scaledToFit().frame(width: 38, height: 38)
             }
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(buddyName) — your money buddy").font(Typo.bodyBold).foregroundStyle(Palette.ink)
@@ -142,7 +124,7 @@ struct BuddyChatView: View {
             ScrollView {
                 LazyVStack(spacing: 10) {
                     ForEach(messages) { msg in
-                        MessageBubble(msg: msg, buddyEmoji: buddyEmoji)
+                        MessageBubble(msg: msg, bunnyAvatar: bunnyAvatar)
                             .id(msg.id)
                             .transition(.asymmetric(
                                 insertion: .scale(scale: 0.85).combined(with: .opacity).combined(with: .move(edge: .bottom)),
@@ -150,7 +132,7 @@ struct BuddyChatView: View {
                             ))
                     }
                     if thinking {
-                        TypingIndicator(buddyEmoji: buddyEmoji)
+                        TypingIndicator(bunnyAvatar: bunnyAvatar)
                             .id("typing")
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
@@ -234,7 +216,7 @@ struct BuddyChatView: View {
 
 struct MessageBubble: View {
     let msg: ChatMsg
-    let buddyEmoji: String
+    let bunnyAvatar: String
 
     var body: some View {
         if msg.role == .user {
@@ -254,7 +236,7 @@ struct MessageBubble: View {
             HStack(alignment: .bottom, spacing: 6) {
                 ZStack {
                     Circle().fill(Gradients.hero).frame(width: 28, height: 28)
-                    Text(buddyEmoji).font(.system(size: 16))
+                    Image(bunnyAvatar).resizable().scaledToFit().frame(width: 24, height: 24)
                 }
                 Text(msg.text)
                     .font(Typo.body)
@@ -278,7 +260,7 @@ struct MessageBubble: View {
 // MARK: - Typing indicator
 
 struct TypingIndicator: View {
-    let buddyEmoji: String
+    let bunnyAvatar: String
     @State private var phase: Int = 0
     private let timer = Timer.publish(every: 0.35, on: .main, in: .common).autoconnect()
 
@@ -286,7 +268,7 @@ struct TypingIndicator: View {
         HStack(alignment: .bottom, spacing: 6) {
             ZStack {
                 Circle().fill(Gradients.hero).frame(width: 28, height: 28)
-                Text(buddyEmoji).font(.system(size: 16))
+                Image(bunnyAvatar).resizable().scaledToFit().frame(width: 24, height: 24)
             }
             HStack(spacing: 5) {
                 ForEach(0..<3, id: \.self) { i in

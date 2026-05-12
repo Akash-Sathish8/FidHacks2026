@@ -3,7 +3,41 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var app: AppState
 
+    @State private var tipIndex: Int = 0
+    private let tipTimer = Timer.publish(every: 9, on: .main, in: .common).autoconnect()
+
+    private let dailyTips: [(headline: String, body: String)] = [
+        ("Budget against the algorithm",
+         "Social media trends and lifestyle pressure can push you toward overspending. Set spending limits, audit subscriptions, and save consistently — that's how you make room for the experiences you actually want without taking on unnecessary debt."),
+        ("Lock down your digital wallet",
+         "Most of your money lives in apps now. Use strong, unique passwords, enable two-factor authentication everywhere, and stay skeptical of \"too-good-to-be-true\" investment DMs. Protecting your accounts is protecting your money."),
+        ("Money in relationships",
+         "Be careful about sharing financial responsibility too quickly — lending, splitting accounts, or covering people beyond your limits. \"No\" is a complete sentence and a real financial tool."),
+        ("Start the buffer",
+         "An emergency fund is the difference between a setback and a spiral. Even small automatic transfers each month build a cushion that absorbs car repairs, medical bills, or job changes."),
+        ("Track to grow",
+         "Build a budget that reflects both your responsibilities AND your personal goals. Reviewing your spending each week makes unhealthy habits visible, keeps you saving consistently, and helps your future self thank you."),
+    ]
+
     private let greeting: String = "Hi, Akash."
+
+    private var homeBuddyEmoji: String {
+        switch app.user.buddyId {
+        case "fox":   return "🦊"
+        case "cat":   return "🐱"
+        default:      return "🐰"
+        }
+    }
+
+    /// Asset name for the home-screen buddy avatar — matches the BuddyPicker artwork.
+    private var homeBuddyImageName: String? {
+        switch app.user.buddyId {
+        case "fox":             return "Fox_Plain"
+        case "cat":             return "Cat_Plain"
+        case "bunny", "otter":  return "Bunny_Plain"
+        default:                return nil
+        }
+    }
 
     // "Plush" font on Home — SwiftUI silently falls back to system if the
     // custom font isn't bundled, so we layer SF Rounded on top to keep the
@@ -30,8 +64,17 @@ struct HomeView: View {
                         HStack(spacing: Spacing.lg) {
                             ZStack {
                                 Circle().fill(Gradients.hero).frame(width: 72, height: 72)
-                                Text("🦊").font(.system(size: 36))
+                                if let img = homeBuddyImageName {
+                                    // Image scaled larger than circle so the
+                                    // character pops past the frame, matching
+                                    // the BuddyPicker tile treatment.
+                                    Image(img).resizable().scaledToFit()
+                                        .frame(width: 108, height: 108)
+                                } else {
+                                    Text(homeBuddyEmoji).font(.system(size: 36))
+                                }
                             }
+                            .frame(width: 72, height: 72)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Level \(app.user.level)")
                                     .font(plush(23, weight: .semibold))   // 18 × 1.25
@@ -51,6 +94,8 @@ struct HomeView: View {
                             }
                         }
                     }
+
+                    dailyTipCard
 
                     Text("Today's move")
                         .font(plush(28, weight: .bold))       // 22 × 1.25
@@ -75,6 +120,63 @@ struct HomeView: View {
                     Spacer(minLength: 120)
                 }
                 .padding(.horizontal, Spacing.xl)
+            }
+        }
+        .onReceive(tipTimer) { _ in
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.85)) {
+                tipIndex = (tipIndex + 1) % dailyTips.count
+            }
+        }
+    }
+
+    private var dailyTipCard: some View {
+        let tip = dailyTips[tipIndex]
+        return GlassCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("DAILY TIP")
+                        .font(plush(13, weight: .bold))
+                        .tracking(1.4)
+                        .foregroundStyle(Palette.lavenderDeep)
+                    Spacer()
+                    Text("\(tipIndex + 1) / \(dailyTips.count)")
+                        .font(plush(13, weight: .semibold))
+                        .foregroundStyle(Palette.inkMuted)
+                        .monospacedDigit()
+                }
+
+                // The .id() change forces SwiftUI to treat the new text as a
+                // brand-new view, which makes the transition animation fire.
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(tip.headline)
+                        .font(plush(23, weight: .semibold))
+                        .foregroundStyle(Palette.ink)
+                    Text(tip.body)
+                        .font(plush(17, weight: .regular))
+                        .foregroundStyle(Palette.inkSoft)
+                        .lineSpacing(2)
+                }
+                .id(tipIndex)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal:   .move(edge: .leading).combined(with: .opacity)
+                ))
+
+                HStack(spacing: 6) {
+                    ForEach(0..<dailyTips.count, id: \.self) { i in
+                        Capsule()
+                            .fill(i == tipIndex ? Palette.lavenderDeep : Palette.lavenderSoft)
+                            .frame(width: i == tipIndex ? 22 : 6, height: 6)
+                            .animation(.easeInOut(duration: 0.35), value: tipIndex)
+                    }
+                }
+                .padding(.top, 2)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
+                tipIndex = (tipIndex + 1) % dailyTips.count
             }
         }
     }

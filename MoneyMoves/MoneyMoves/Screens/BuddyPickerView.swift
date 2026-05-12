@@ -3,15 +3,16 @@ import SwiftUI
 struct Buddy: Identifiable {
     let id: String
     let name: String
-    let emoji: String
+    let emoji: String       // emoji fallback
+    let imageName: String?  // nil → render emoji; non-nil → render asset image
     let tagline: String
     let gradient: LinearGradient
 }
 
 let BUDDIES: [Buddy] = [
-    Buddy(id: "fox",   name: "Fox",   emoji: "🦊", tagline: "Sharp + scrappy",  gradient: Gradients.peachCard),
-    Buddy(id: "otter", name: "Otter", emoji: "🦦", tagline: "Playful + steady", gradient: Gradients.mintCard),
-    Buddy(id: "cat",   name: "Cat",   emoji: "🐱", tagline: "Curious + calm",   gradient: Gradients.lavenderCard),
+    Buddy(id: "fox",   name: "Fox",   emoji: "🦊", imageName: "Fox_Plain",   tagline: "Sharp + scrappy",  gradient: Gradients.peachCard),
+    Buddy(id: "bunny", name: "Bunny", emoji: "🐰", imageName: "Bunny_Plain", tagline: "Playful + steady", gradient: Gradients.mintCard),
+    Buddy(id: "cat",   name: "Cat",   emoji: "🐱", imageName: "Cat_Plain",   tagline: "Curious + calm",   gradient: Gradients.lavenderCard),
 ]
 
 struct BuddyPickerView: View {
@@ -68,8 +69,16 @@ struct BuddyCard: View {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(buddy.gradient)
                         .frame(width: 88, height: 88)
-                    Text(buddy.emoji).font(.system(size: 44))
+                    if let img = buddy.imageName {
+                        // Image larger than the tile so the character pops past
+                        // the frame — keeps the original button size intact.
+                        Image(img).resizable().scaledToFit()
+                            .frame(width: 130, height: 130)
+                    } else {
+                        Text(buddy.emoji).font(.system(size: 44))
+                    }
                 }
+                .frame(width: 88, height: 88)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(buddy.name).font(Typo.h2).foregroundStyle(Palette.ink)
                     Text(buddy.tagline).font(Typo.body).foregroundStyle(Palette.inkSoft)

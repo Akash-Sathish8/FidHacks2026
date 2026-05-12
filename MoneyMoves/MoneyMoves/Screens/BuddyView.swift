@@ -16,18 +16,35 @@ struct BuddyView: View {
     private var buddyEmoji: String {
         switch app.user.buddyId {
         case "fox":   return "🦊"
-        case "otter": return "🦦"
+        case "bunny", "otter": return "🐰"   // "otter" kept for back-compat with old saves
         case "cat":   return "🐱"
         default:      return "✨"
         }
     }
 
+    /// Asset name for the bunny artwork that bakes in the equipped accessory.
+    private var bunnyImageName: String {
+        switch app.user.equippedAccessory {
+        case "crown":   return "Bunny_Crown"
+        case "scarf":   return "Bunny_Scarf"
+        case "glasses": return "Bunny_Glasses"
+        case "balloon": return "Bunny_Balloon"
+        case "rose":    return "Bunny_Rose"
+        case "donut":   return "Bunny_Donut"
+        default:        return "Bunny_Plain"
+        }
+    }
+
+    private var isBunny: Bool {
+        app.user.buddyId == "bunny" || app.user.buddyId == "otter"
+    }
+
     private var foodPool: [String] {
         switch app.user.buddyId {
-        case "fox":   return ["🍇", "🍓", "🐭"]
-        case "otter": return ["🐟", "🦀", "🦞", "🐚"]
-        case "cat":   return ["🐟", "🐭", "🥛", "🍣"]
-        default:      return ["🍪", "🍇", "🍓"]
+        case "fox":              return ["🍇", "🍓", "🐭"]
+        case "bunny", "otter":   return ["🥕", "🍓", "🥬", "🌼"]
+        case "cat":              return ["🐟", "🐭", "🥛", "🍣"]
+        default:                 return ["🍪", "🍇", "🍓"]
         }
     }
 
@@ -124,20 +141,29 @@ struct BuddyView: View {
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.4))
-                    .frame(width: 140, height: 140)
+                    .frame(width: 180, height: 180)
 
-                // Buddy + accessory rotate as a unit so the crown stays
-                // attached to the head when the buddy bobs / tilts.
-                ZStack {
-                    Text(buddyEmoji)
-                        .font(.system(size: mouthOpen ? 94 : 84))
-
-                    if let eq = app.user.equippedAccessory,
-                       let acc = ACCESSORIES.first(where: { $0.id == eq }) {
-                        let p = accessoryPlacement(id: acc.id)
-                        Text(acc.emoji)
-                            .font(.system(size: p.size))
-                            .offset(x: p.x, y: p.y)
+                // Buddy + accessory rotate as a unit. For the bunny we render
+                // a single image (the accessory is baked into the artwork);
+                // for other buddies we fall back to emoji + accessory overlay.
+                Group {
+                    if isBunny {
+                        Image(bunnyImageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: mouthOpen ? 230 : 210, height: mouthOpen ? 230 : 210)
+                    } else {
+                        ZStack {
+                            Text(buddyEmoji)
+                                .font(.system(size: mouthOpen ? 94 : 84))
+                            if let eq = app.user.equippedAccessory,
+                               let acc = ACCESSORIES.first(where: { $0.id == eq }) {
+                                let p = accessoryPlacement(id: acc.id)
+                                Text(acc.emoji)
+                                    .font(.system(size: p.size))
+                                    .offset(x: p.x, y: p.y)
+                            }
+                        }
                     }
                 }
                 .rotationEffect(.degrees(buddyBob ? 4 : -4))

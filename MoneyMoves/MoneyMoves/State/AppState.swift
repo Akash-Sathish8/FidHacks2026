@@ -245,6 +245,9 @@ final class AppState: ObservableObject {
         // Older builds defaulted empty names to "Friend" — strip that so
         // the home greeting either shows the real name or falls back to "Hi there."
         if user.name == "Friend" { user.name = "" }
+        // Buddy slot used to be called "otter" and rendered as 🦦. We replaced
+        // that slot with the hand-drawn bunny artwork; migrate older saves.
+        if user.buddyId == "otter" { user.buddyId = "bunny" }
         if d.string(forKey: routeKey) == "main", user.buddyId != nil {
             route = .main
         }
