@@ -3,6 +3,8 @@ import SwiftUI
 struct MoneyView: View {
     @EnvironmentObject var app: AppState
     @State private var showFutureSelf: Bool = false
+    @State private var showGoals: Bool = false
+    @State private var showBankConnect: Bool = false
 
     var body: some View {
         GradientBackground {
@@ -10,13 +12,18 @@ struct MoneyView: View {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
                     Spacer().frame(height: Spacing.xxxl)
 
-                    Eyebrow(text: "Watchlist")
+                    Eyebrow(text: "Money")
                     Text("Money.").font(Typo.display).foregroundStyle(Palette.ink)
-                    Text("Track real names. Then practice trading in Market Games.")
+                    Text("Track goals, watch names, project your future self.")
                         .font(Typo.body).foregroundStyle(Palette.inkSoft)
                         .padding(.bottom, Spacing.sm)
 
+                    bankCard
+                    goalsCard
                     futureSelfCard
+
+                    Text("Watchlist").font(Typo.h2).foregroundStyle(Palette.ink)
+                        .padding(.top, Spacing.md)
 
                     VStack(spacing: Spacing.sm) {
                         ForEach(WATCHLIST) { asset in
@@ -32,6 +39,120 @@ struct MoneyView: View {
         .sheet(isPresented: $showFutureSelf) {
             FutureSelfView(onClose: { showFutureSelf = false })
         }
+        .fullScreenCover(isPresented: $showGoals) {
+            GoalsView { showGoals = false }
+                .environmentObject(app)
+        }
+        .sheet(isPresented: $showBankConnect) {
+            BankConnectView { showBankConnect = false }
+                .environmentObject(app)
+        }
+    }
+
+    @ViewBuilder
+    private var bankCard: some View {
+        if let bank = app.user.connectedBank {
+            // Connected state
+            HStack(spacing: Spacing.md) {
+                ZStack {
+                    Circle().fill(Palette.success.opacity(0.18)).frame(width: 44, height: 44)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(Palette.success)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(bank) connected").font(Typo.bodyBold).foregroundStyle(Palette.ink)
+                    Text("Syncing transactions in the background")
+                        .font(Typo.caption).foregroundStyle(Palette.inkMuted)
+                }
+                Spacer()
+                Button { app.disconnectBank() } label: {
+                    Text("Disconnect")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.roseDeep)
+                }.buttonStyle(.plain)
+            }
+            .padding(Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                        .stroke(Palette.success.opacity(0.3), lineWidth: 1))
+            )
+        } else {
+            // Not connected state — entry point
+            Button { showBankConnect = true } label: {
+                HStack(spacing: Spacing.md) {
+                    ZStack {
+                        Circle().fill(Palette.lavenderSoft).frame(width: 44, height: 44)
+                        Image(systemName: "building.columns.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Palette.lavenderDeep)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Connect your bank")
+                            .font(Typo.bodyBold).foregroundStyle(Palette.ink)
+                        Text("Auto-import transactions into your categories")
+                            .font(Typo.caption).foregroundStyle(Palette.inkMuted)
+                    }
+                    Spacer()
+                    Text("→").font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.ink)
+                }
+                .padding(Spacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                            .stroke(Palette.glassBorder, lineWidth: 1))
+                )
+            }.buttonStyle(.plain)
+        }
+    }
+
+    private var goalsCard: some View {
+        let active = app.activeGoal
+        let savedThisMonth = app.categories.reduce(0) { $0 + $1.saved }
+        return Button { showGoals = true } label: {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                HStack(spacing: Spacing.md) {
+                    Text(active?.emoji ?? "🎯").font(.system(size: 36))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Eyebrow(text: "Saving for")
+                        Text(active?.name ?? "Set a goal")
+                            .font(Typo.h3).foregroundStyle(Palette.ink)
+                        if let g = active {
+                            Text("\(g.percent)% there  ·  \(g.remaining.currency) to go")
+                                .font(Typo.caption).foregroundStyle(Palette.inkMuted)
+                            if g.monthlyTarget > 0 {
+                                Text("\(g.monthlyTarget.currency)/mo · \(g.paceLabel)")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(Palette.lavenderDeep)
+                            }
+                        }
+                    }
+                    Spacer()
+                    Text("→").font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.ink)
+                }
+                if let g = active {
+                    ProgressBar(value: g.fraction).frame(height: 10)
+                }
+                if savedThisMonth > 0 {
+                    Text("+\(savedThisMonth.currency) cushion this month — tap to apply")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Palette.success)
+                        .padding(.top, 4)
+                }
+            }
+            .padding(Spacing.lg)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+                        .stroke(Palette.glassBorder, lineWidth: 1))
+            )
+            .shadow(color: Palette.lavenderDeep.opacity(0.2), radius: 28, x: 0, y: 12)
+        }
+        .buttonStyle(.plain)
     }
 
     private var futureSelfCard: some View {

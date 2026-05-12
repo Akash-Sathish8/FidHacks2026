@@ -5,39 +5,39 @@ struct SplashView: View {
 
     var body: some View {
         GradientBackground {
-            VStack(spacing: Spacing.lg) {
-                Spacer()
+            ZStack {
+                // Centered cluster: logo + tagline — sits dead-center on screen
+                VStack(spacing: 45) {     // gap below the logo
+                    GeometryReader { geo in
+                        Image("BudgetBloomLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geo.size.width, height: geo.size.width)
+                            .scaleEffect(1.7)
+                            .shadow(color: Palette.lavenderDeep.opacity(0.2), radius: 36, x: 0, y: 20)
+                    }
+                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.leading, Spacing.lg)
+                    .padding(.trailing, Spacing.xxl)  // extra right padding
 
-                ZStack {
-                    Circle()
-                        .fill(Gradients.hero)
-                        .frame(width: 180, height: 180)
-                        .shadow(color: Palette.lavenderDeep.opacity(0.35), radius: 40, x: 0, y: 24)
-                    Text("✦")
-                        .font(.system(size: 96))
-                        .foregroundStyle(.white)
-                }
-
-                VStack(spacing: 6) {
-                    Eyebrow(text: "FidHacks 2026")
-                    Text("Budget Bloom.")
-                        .font(Typo.display)
-                        .foregroundStyle(Palette.ink)
-                    Text("Make your wallet boom with Budget Bloom.")
-                        .font(Typo.body)
+                    Text("Make your wallet boom\nwith Budget Bloom.")
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundStyle(Palette.inkSoft)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, Spacing.xl)
                 }
-                .multilineTextAlignment(.center)
-                .padding(.top, Spacing.md)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.bottom, 40)    // adds visible gap above the bottom button
 
-                Spacer()
-
-                GradientButton(title: "Get started") {
-                    app.route = .login
+                // Bottom-pinned button
+                VStack {
+                    Spacer()
+                    GradientButton(title: "Get started") {
+                        app.route = .login
+                    }
+                    .padding(.horizontal, Spacing.xl)
+                    .padding(.bottom, Spacing.xxl)
                 }
-                .padding(.horizontal, Spacing.xl)
-                .padding(.bottom, Spacing.xxl)
             }
         }
     }
@@ -46,3 +46,4 @@ struct SplashView: View {
 #Preview {
     SplashView().environmentObject(AppState())
 }
+

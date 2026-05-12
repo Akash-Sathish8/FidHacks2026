@@ -22,6 +22,7 @@ struct RootView: View {
             case .splash:        SplashView()
             case .login:         LoginView()
             case .buddyPicker:   BuddyPickerView()
+            case .goalSetup:     GoalSetupView()
             case .main:          MainTabView()
             }
         }

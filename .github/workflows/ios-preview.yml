@@ -1,0 +1,121 @@
+name: iOS Preview
+
+# Every push (any branch) produces a folder of PNG screenshots
+# showing the current state of Budget Bloom. Anyone without Xcode
+# can open the run on GitHub → Artifacts → download the zip and
+# see the actual UI their changes produced.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:    # manual trigger from the Actions tab
+
+jobs:
+  build-and-screenshot:
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    env:
+      SCHEME: MoneyMoves
+      PROJECT: MoneyMoves/MoneyMoves.xcodeproj
+      BUNDLE_ID: com.akashsathish.MoneyMoves
+      DEVICE: iPhone 17 Pro
+      BUILD_DIR: MoneyMoves/build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -derivedDataPath "$BUILD_DIR" \
+            -quiet \
+            build
+
+      - name: Boot simulator
+        run: |
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          # Status-bar override → deterministic time / full battery / signal in shots
+          xcrun simctl status_bar "$DEVICE" override \
+            --time "9:41" \
+            --dataNetwork wifi \
+            --wifiMode active \
+            --wifiBars 3 \
+            --cellularMode active \
+            --cellularBars 4 \
+            --batteryState charged \
+            --batteryLevel 100
+
+      - name: Install app
+        run: |
+          APP="$BUILD_DIR/Build/Products/Debug-iphonesimulator/$SCHEME.app"
+          xcrun simctl install booted "$APP"
+
+      - name: Prepare screenshots folder
+        run: mkdir -p screenshots
+
+      # ────────────────────────────────────────────────────────────────
+      # SHOT 1 — Splash screen (fresh install, no saved state)
+      # ────────────────────────────────────────────────────────────────
+      - name: Capture splash
+        run: |
+          xcrun simctl uninstall booted "$BUNDLE_ID" || true
+          APP="$BUILD_DIR/Build/Products/Debug-iphonesimulator/$SCHEME.app"
+          xcrun simctl install booted "$APP"
+          xcrun simctl launch booted "$BUNDLE_ID"
+          sleep 4
+          xcrun simctl io booted screenshot screenshots/01-splash.png
+          xcrun simctl terminate booted "$BUNDLE_ID" || true
+
+      # ────────────────────────────────────────────────────────────────
+      # Seed user state so the app boots straight into the main tab bar.
+      # AppState.load() routes to .main when:
+      #   - "mm.route.v1" String == "main"
+      #   - user.buddyId != nil
+      # We write those defaults BEFORE launch so the splash is skipped.
+      # ────────────────────────────────────────────────────────────────
+      - name: Seed defaults → main route
+        run: |
+          # User struct (matches AppState.User Codable shape)
+          USER_JSON='{"name":"Akash","email":"akash@example.com","localeId":"en_US","buddyId":"otter","coins":240,"xp":80,"level":2,"streak":3,"completedQuests":[],"ownedAccessories":[],"equippedAccessory":null,"connectedBank":null}'
+          # Goal (one active so onboarding GoalSetup is skipped)
+          GOALS_JSON='[{"id":"demo","emoji":"🚗","name":"Dream car","target":25000,"current":4200,"monthlyTarget":300,"isActive":true}]'
+
+          DEFAULTS_DIR="$HOME/Library/Developer/CoreSimulator/Devices"
+          DEVICE_UDID=$(xcrun simctl list devices booted | grep "$DEVICE " | grep -oE '[A-F0-9-]{36}' | head -1)
+          APP_CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" data)
+
+          # Write via the simulator's defaults command-line — runs inside the sim sandbox
+          xcrun simctl spawn booted defaults write "$BUNDLE_ID" mm.route.v1 -string "main"
+          xcrun simctl spawn booted defaults write "$BUNDLE_ID" mm.user.v1 -data "$(echo -n "$USER_JSON" | xxd -p | tr -d '\n')"
+          xcrun simctl spawn booted defaults write "$BUNDLE_ID" mm.goals.v1 -data "$(echo -n "$GOALS_JSON" | xxd -p | tr -d '\n')"
+
+      # ────────────────────────────────────────────────────────────────
+      # SHOT 2 — Home tab (seeded state)
+      # ────────────────────────────────────────────────────────────────
+      - name: Capture Home
+        run: |
+          xcrun simctl launch booted "$BUNDLE_ID"
+          sleep 4
+          xcrun simctl io booted screenshot screenshots/02-home.png
+          xcrun simctl terminate booted "$BUNDLE_ID" || true
+
+      # ────────────────────────────────────────────────────────────────
+      # Upload all screenshots as an artifact on this run.
+      # Open the workflow run on github.com → Artifacts → download zip.
+      # ────────────────────────────────────────────────────────────────
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-preview-${{ github.ref_name }}-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 14
+          if-no-files-found: error

@@ -36,6 +36,14 @@
 		B0000000000000000000051 /* SwipeBuyDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000051 /* SwipeBuyDeck.swift */; };
 		B0000000000000000000052 /* SwipeBuyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000052 /* SwipeBuyView.swift */; };
 		B0000000000000000000060 /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000060 /* AppLocale.swift */; };
+		B0000000000000000000070 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000070 /* SoundManager.swift */; };
+		B0000000000000000000071 /* GoalsState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000071 /* GoalsState.swift */; };
+		B0000000000000000000072 /* GoalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000072 /* GoalsView.swift */; };
+		B0000000000000000000080 /* BankConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000080 /* BankConnectView.swift */; };
+		B0000000000000000000090 /* BuddyChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000090 /* BuddyChat.swift */; };
+		B00000000000000000000A0 /* FirstPaycheckTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000A0 /* FirstPaycheckTheme.swift */; };
+		B00000000000000000000A1 /* FirstPaycheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000A1 /* FirstPaycheckView.swift */; };
+		B00000000000000000000B0 /* GoalSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000B0 /* GoalSetupView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +77,14 @@
 		F0000000000000000000051 /* SwipeBuyDeck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBuyDeck.swift; sourceTree = "<group>"; };
 		F0000000000000000000052 /* SwipeBuyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBuyView.swift; sourceTree = "<group>"; };
 		F0000000000000000000060 /* AppLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
+		F0000000000000000000070 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		F0000000000000000000071 /* GoalsState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsState.swift; sourceTree = "<group>"; };
+		F0000000000000000000072 /* GoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsView.swift; sourceTree = "<group>"; };
+		F0000000000000000000080 /* BankConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BankConnectView.swift; sourceTree = "<group>"; };
+		F0000000000000000000090 /* BuddyChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyChat.swift; sourceTree = "<group>"; };
+		F00000000000000000000A0 /* FirstPaycheckTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPaycheckTheme.swift; sourceTree = "<group>"; };
+		F00000000000000000000A1 /* FirstPaycheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPaycheckView.swift; sourceTree = "<group>"; };
+		F00000000000000000000B0 /* GoalSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalSetupView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +141,8 @@
 			isa = PBXGroup;
 			children = (
 				F0000000000000000000003 /* GradientBackground.swift */,
+				F0000000000000000000070 /* SoundManager.swift */,
+				F0000000000000000000090 /* BuddyChat.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -134,6 +152,7 @@
 			children = (
 				F0000000000000000000004 /* AppState.swift */,
 				F0000000000000000000060 /* AppLocale.swift */,
+				F0000000000000000000071 /* GoalsState.swift */,
 				F0000000000000000000005 /* TraderTypes.swift */,
 				F0000000000000000000006 /* TraderEngine.swift */,
 			);
@@ -153,8 +172,12 @@
 				F0000000000000000000032 /* MoneyView.swift */,
 				F0000000000000000000033 /* SquadView.swift */,
 				F0000000000000000000034 /* BuddyView.swift */,
+				F00000000000000000000B0 /* GoalSetupView.swift */,
+				F0000000000000000000072 /* GoalsView.swift */,
+				F0000000000000000000080 /* BankConnectView.swift */,
 				G0000000000000000000009 /* SwipeSmart */,
 				G000000000000000000000A /* SwipeBuy */,
+				G000000000000000000000B /* FirstPaycheck */,
 				F000000000000000000000D /* TraderLobbyView.swift */,
 				F000000000000000000000E /* TraderGameView.swift */,
 				F000000000000000000000F /* TraderResultView.swift */,
@@ -180,6 +203,15 @@
 				F0000000000000000000052 /* SwipeBuyView.swift */,
 			);
 			path = SwipeBuy;
+			sourceTree = "<group>";
+		};
+		G000000000000000000000B /* FirstPaycheck */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000A0 /* FirstPaycheckTheme.swift */,
+				F00000000000000000000A1 /* FirstPaycheckView.swift */,
+			);
+			path = FirstPaycheck;
 			sourceTree = "<group>";
 		};
 		G0000000000000000000007 /* Preview Content */ = {
@@ -295,6 +327,14 @@
 				B0000000000000000000051 /* SwipeBuyDeck.swift in Sources */,
 				B0000000000000000000052 /* SwipeBuyView.swift in Sources */,
 				B0000000000000000000060 /* AppLocale.swift in Sources */,
+				B0000000000000000000070 /* SoundManager.swift in Sources */,
+				B0000000000000000000071 /* GoalsState.swift in Sources */,
+				B0000000000000000000072 /* GoalsView.swift in Sources */,
+				B0000000000000000000080 /* BankConnectView.swift in Sources */,
+				B0000000000000000000090 /* BuddyChat.swift in Sources */,
+				B00000000000000000000A0 /* FirstPaycheckTheme.swift in Sources */,
+				B00000000000000000000A1 /* FirstPaycheckView.swift in Sources */,
+				B00000000000000000000B0 /* GoalSetupView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

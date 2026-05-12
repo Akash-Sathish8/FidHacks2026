@@ -34,7 +34,8 @@ struct LoginView: View {
                     Spacer().frame(height: Spacing.lg)
 
                     GradientButton(title: "Continue") {
-                        app.user.name = name.isEmpty ? "Friend" : name
+                        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        app.user.name = trimmed
                         app.user.email = email
                         app.setLocale(selectedLocale)
                         app.route = .buddyPicker

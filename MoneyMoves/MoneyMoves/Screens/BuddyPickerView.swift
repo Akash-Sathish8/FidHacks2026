@@ -44,8 +44,8 @@ struct BuddyPickerView: View {
 
                 GradientButton(title: selectedId == nil ? "Pick a buddy" : "Let's go") {
                     guard let id = selectedId else { return }
-                    app.user.buddyId = id
-                    app.route = .main
+                    app.setBuddyId(id)
+                    app.route = .goalSetup
                 }
                 .opacity(selectedId == nil ? 0.5 : 1)
                 .disabled(selectedId == nil)

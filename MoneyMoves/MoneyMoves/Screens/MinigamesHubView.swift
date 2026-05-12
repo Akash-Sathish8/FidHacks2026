@@ -4,6 +4,7 @@ struct MinigamesHubView: View {
     @State private var showTraderLobby: Bool = false
     @State private var showSwipeSmart: Bool = false   // wired to the Reigns-style MoneyMoves game
     @State private var showSwipeBuy: Bool = false     // wired to the budget swipe SwipeSmart game
+    @State private var showFirstPaycheck: Bool = false
     @State private var comingSoonName: String? = nil
 
     private let games: [Game] = [
@@ -13,6 +14,11 @@ struct MinigamesHubView: View {
         Game(id: .moves,  tag: "Life sim", title: "MoneyMoves",
              desc: "Swipe through 4 years of college money moves. 4 stats, 44 decisions.",
              gradient: Gradients.lavenderCard, glyphTint: Color(hex: 0x6D4FD4), ready: true),
+        Game(id: .paycheck, tag: "First job", title: "First Paycheck Shock",
+             desc: "Get the offer. Negotiate. Watch taxes eat your gross. Budget the rest.",
+             gradient: LinearGradient(colors: [Color(hex: 0xFFE3D8), Color(hex: 0xFCF7EE)],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+             glyphTint: Color(hex: 0xFF7B5F), ready: true),
         Game(id: .market, tag: "Investing", title: "Market Games",
              desc: "Rewind real market history. Compress months into seconds. Beat the benchmark.",
              gradient: Gradients.mintCard, glyphTint: Palette.success, ready: true),
@@ -37,9 +43,10 @@ struct MinigamesHubView: View {
                         ForEach(games) { game in
                             GameCard(game: game) {
                                 switch game.id {
-                                case .market: showTraderLobby = true
-                                case .moves:  showSwipeSmart = true
-                                case .swipe:  showSwipeBuy = true
+                                case .market:   showTraderLobby = true
+                                case .moves:    showSwipeSmart = true
+                                case .swipe:    showSwipeBuy = true
+                                case .paycheck: showFirstPaycheck = true
                                 }
                             }
                         }
@@ -67,6 +74,9 @@ struct MinigamesHubView: View {
         .fullScreenCover(isPresented: $showSwipeBuy) {
             SwipeBuyView { showSwipeBuy = false }
         }
+        .fullScreenCover(isPresented: $showFirstPaycheck) {
+            FirstPaycheckView { showFirstPaycheck = false }
+        }
         .alert("Coming soon",
                isPresented: Binding(get: { comingSoonName != nil }, set: { if !$0 { comingSoonName = nil } })) {
             Button("OK", role: .cancel) { comingSoonName = nil }
@@ -79,7 +89,7 @@ struct MinigamesHubView: View {
 // MARK: - Game model + card
 
 struct Game: Identifiable {
-    enum Id: String { case swipe, moves, market }
+    enum Id: String { case swipe, moves, paycheck, market }
     let id: Id
     let tag: String
     let title: String
@@ -137,10 +147,38 @@ struct GameCard: View {
     @ViewBuilder
     private var glyph: some View {
         switch game.id {
-        case .swipe:  SwipeGlyph(tint: game.glyphTint)
-        case .moves:  MovesGlyph(tint: game.glyphTint)
-        case .market: MarketGlyph()
+        case .swipe:    SwipeGlyph(tint: game.glyphTint)
+        case .moves:    MovesGlyph(tint: game.glyphTint)
+        case .paycheck: PaycheckGlyph(tint: game.glyphTint)
+        case .market:   MarketGlyph()
         }
+    }
+}
+
+struct PaycheckGlyph: View {
+    let tint: Color
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.white)
+                .frame(width: 52, height: 30)
+                .overlay(
+                    VStack(alignment: .leading, spacing: 3) {
+                        Rectangle().fill(tint.opacity(0.4)).frame(width: 32, height: 2)
+                        Rectangle().fill(tint.opacity(0.3)).frame(width: 22, height: 2)
+                        Rectangle().fill(tint.opacity(0.3)).frame(width: 28, height: 2)
+                    }
+                    .padding(.leading, 8),
+                    alignment: .leading
+                )
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                .rotationEffect(.degrees(-6))
+            Text("$")
+                .font(.system(size: 26, weight: .heavy, design: .serif))
+                .foregroundStyle(tint)
+                .offset(x: 14, y: 12)
+        }
+        .frame(width: 70, height: 56)
     }
 }
 

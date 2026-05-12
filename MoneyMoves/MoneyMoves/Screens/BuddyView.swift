@@ -125,21 +125,25 @@ struct BuddyView: View {
                 Circle()
                     .fill(Color.white.opacity(0.4))
                     .frame(width: 140, height: 140)
-                Text(buddyEmoji)
-                    .font(.system(size: mouthOpen ? 94 : 84))
-                    .rotationEffect(.degrees(buddyBob ? 4 : -4))
-                    .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: buddyBob)
-                    .rotationEffect(.degrees(buddyRotation))
-                    .scaleEffect(buddyScale)
 
-                // Equipped accessory floats above
-                if let eq = app.user.equippedAccessory,
-                   let acc = ACCESSORIES.first(where: { $0.id == eq }) {
-                    Text(acc.emoji)
-                        .font(.system(size: 34))
-                        .offset(y: -54)
-                        .scaleEffect(buddyScale)
+                // Buddy + accessory rotate as a unit so the crown stays
+                // attached to the head when the buddy bobs / tilts.
+                ZStack {
+                    Text(buddyEmoji)
+                        .font(.system(size: mouthOpen ? 94 : 84))
+
+                    if let eq = app.user.equippedAccessory,
+                       let acc = ACCESSORIES.first(where: { $0.id == eq }) {
+                        let p = accessoryPlacement(id: acc.id)
+                        Text(acc.emoji)
+                            .font(.system(size: p.size))
+                            .offset(x: p.x, y: p.y)
+                    }
                 }
+                .rotationEffect(.degrees(buddyBob ? 4 : -4))
+                .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: buddyBob)
+                .rotationEffect(.degrees(buddyRotation))
+                .scaleEffect(buddyScale)
             }
             .contentShape(Rectangle())
             .onTapGesture { petBuddy() }
@@ -232,12 +236,14 @@ struct BuddyView: View {
     // MARK: - Interactions
 
     private func feedBuddy() {
+        SoundManager.shared.play(.feed)
         let emoji = foodPool.randomElement() ?? "🍪"
         let drop = FoodDrop(emoji: emoji, xOffset: CGFloat.random(in: -30...30))
         foods.append(drop)
     }
 
     private func catchFood() {
+        SoundManager.shared.play(.catchFood)
         // mouth open + bounce
         withAnimation(.easeOut(duration: 0.15)) { mouthOpen = true }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) { buddyScale = 1.18 }
@@ -254,6 +260,7 @@ struct BuddyView: View {
     }
 
     private func petBuddy() {
+        SoundManager.shared.play(.pet)
         // Quick tilt + heart
         withAnimation(.easeOut(duration: 0.15)) { buddyRotation = -10 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
@@ -296,6 +303,20 @@ struct BuddyView: View {
             showToast("\(acc.emoji) unlocked + equipped")
         } else {
             showToast("Not enough coins — earn \(acc.cost - app.user.coins) more.")
+        }
+    }
+
+    // Per-accessory placement on the buddy. (0, 0) is the buddy's center.
+    // Negative y = up. Positive x = right. Size is the accessory font size.
+    private func accessoryPlacement(id: String) -> (x: CGFloat, y: CGFloat, size: CGFloat) {
+        switch id {
+        case "crown":   return (x: 0,   y: -50, size: 38)  // sits on top of the head
+        case "scarf":   return (x: 0,   y: 28,  size: 34)  // around the neck
+        case "glasses": return (x: 0,   y: -6,  size: 34)  // over the eyes
+        case "balloon": return (x: 18,  y: -68, size: 30)  // floating above
+        case "rose":    return (x: 36,  y: 10,  size: 30)  // held to the side
+        case "donut":   return (x: -36, y: 10,  size: 30)  // held to the side
+        default:        return (x: 0,   y: -50, size: 34)
         }
     }
 

@@ -1,27 +1,28 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selection: Tab = .play
+    @State private var selection: Tab = .home
 
     enum Tab: Hashable, CaseIterable {
-        case home, quests, play, money, squad, buddy
+        // Bar order: Home, Learn, Money, Play, Squad, Buddy
+        case home, learn, money, play, squad, buddy
 
         var label: String {
             switch self {
-            case .home: return "Home"
-            case .quests: return "Quests"
-            case .play: return "Play"
+            case .home:  return "Home"
+            case .learn: return "Learn"
             case .money: return "Money"
+            case .play:  return "Play"
             case .squad: return "Squad"
             case .buddy: return "Buddy"
             }
         }
         var glyph: String {
             switch self {
-            case .home: return "✦"
-            case .quests: return "✧"
-            case .play: return "◈"
+            case .home:  return "✦"
+            case .learn: return "✧"   // (unchanged from Quests)
             case .money: return "◐"
+            case .play:  return "◈"
             case .squad: return "◇"
             case .buddy: return "❀"
             }
@@ -31,17 +32,22 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             switch selection {
-            case .home:   HomeView()
-            case .quests: QuestsView()
-            case .play:   MinigamesHubView()
-            case .money:  MoneyView()
-            case .squad:  SquadView()
-            case .buddy:  BuddyView()
+            case .home:  HomeView()
+            case .learn: QuestsView()
+            case .money: MoneyView()
+            case .play:  MinigamesHubView()
+            case .squad: SquadView()
+            case .buddy: BuddyView()
             }
 
             TabBar(selection: $selection)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 28)
+        }
+        .overlay(alignment: .topTrailing) {
+            BuddyChatButton()
+                .padding(.top, 12)
+                .padding(.trailing, 16)
         }
         .ignoresSafeArea(.keyboard)
     }
